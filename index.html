@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TESTE DE CONHECIMENTO</title>
+    <!-- Carrega o Tailwind CSS para estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Define a fonte Inter como padrão e um fundo escuro */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1e3a8a; /* Azul escuro */
+            color: white;
+            min-height: 100vh;
+        }
+
+        /* Cores baseadas na imagem do usuário */
+        .header-bg {
+            background-color: #1e3a8a;
+        }
+        .main-quiz-box {
+            background-color: #ef4444; /* Vermelho/Laranja para a caixa de pergunta */
+        }
+        .sidebar-box {
+            background-color: #3b82f6; /* Azul médio para a barra lateral */
+        }
+        .button-parar {
+            background-color: #dc2626; /* Vermelho forte */
+        }
+        .button-next {
+            background-color: #6366f1; /* Roxo suave para Próxima Pergunta */
+        }
+        .button-next:hover {
+            background-color: #4f46e5;
+        }
+        /* Estilo base para todos os botões de linhas de vida (Ajuda, Cartas, Placas, Convidados) */
+        .lifeline-button {
+            background-color: #f97316; /* Laranja */
+            transition: transform 0.1s, background-color 0.2s;
+            height: 70px; /* Altura fixa para os botões de linha de vida */
+        }
+        .lifeline-button:hover:not(:disabled) {
+            transform: scale(1.05);
+            background-color: #ea580c;
+        }
+        .lifeline-button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background-color: #9ca3af; /* Cinza para desabilitado */
+        }
+        .score-button {
+            background-color: #10b981; /* Verde esmeralda para o botão de acerto */
+            transition: background-color 0.2s;
+        }
+        .score-button:hover {
+            background-color: #059669;
+        }
+        .timer-display {
+            font-size: 3rem;
+            line-height: 1;
+        }
+        .option-button {
+            background-color: #4f46e5; /* Roxo para opções */
+            transition: background-color 0.2s, opacity 0.2s;
+        }
+        .option-button:hover:not(:disabled) {
+            background-color: #4338ca;
+        }
+        .option-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .correct-answer {
+            background-color: #10b981; /* Verde */
+        }
+        .wrong-answer {
+            background-color: #dc2626; /* Vermelho */
+        }
+        .eliminated-option {
+            text-decoration: line-through;
+            opacity: 0.3;
+        }
+        .ranking-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .ranking-table th, .ranking-table td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        .ranking-table th {
+            background-color: #e5e7eb;
+            color: #1f2937;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center"> <!-- REMOVIDO: p-4 do body -->
+
+    <!-- START SCREEN OVERLAY (TELA DE INÍCIO) -->
+    <div id="start-screen" class="fixed inset-0 bg-blue-900 flex flex-col items-center justify-center p-8 z-50">
+        <!-- TÍTULO DE BOAS-VINDAS (H1 ATUALIZADO) -->
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-widest text-white drop-shadow-lg mb-4">
+            SEJA BEM VINDO, PREPARE-SE PARA UMA GRANDE AVENTURA!
+        </h1>
+        <div class="bg-red-600 p-8 rounded-xl shadow-2xl text-center max-w-xl w-full">
+            <!-- TÍTULO PRINCIPAL (H2 ATUALIZADO E CENTRALIZADO) -->
+            <h2 class="text-4xl sm:text-5xl font-extrabold tracking-widest text-yellow-300 drop-shadow-lg mb-8">
+                TESTE DE CONHECIMENTO
+            </h2>
+            <p class="text-lg mb-6">
+                <!-- TEXTO ALTERADO AQUI -->
+                Responda todas as questões, assinalando a alternativa correta.
+            </p>
+            
+            <!-- NOVOS CAMPOS DE INPUT -->
+            <div class="flex flex-col gap-4 mb-6">
+                <input type="text" id="user-name-input" placeholder="Seu Nome Completo" class="p-3 rounded text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500">
+                <input type="text" id="user-class-input" placeholder="Sua Turma (Ex: 3º A)" class="p-3 rounded text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500">
+            </div>
+            
+            <!-- Mensagem de erro para input vazio -->
+            <p id="start-error-message" class="text-yellow-200 mb-4 hidden">Por favor, preencha seu nome e turma para começar.</p>
+
+            <button id="start-action-btn" class="bg-green-500 hover:bg-green-600 px-12 py-4 rounded-lg font-extrabold text-xl shadow-xl transition duration-300 transform hover:scale-105">
+                AÇÃO
+            </button>
+        </div>
+    </div>
+    
+    <!-- Cabeçalho do Título Principal (Visível no Jogo) -->
+    <header class="w-full max-w-7xl text-center py-6 px-4">
+        <!-- TÍTULO ATUALIZADO AQUI -->
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-widest text-white drop-shadow-lg">
+            TESTE DE CONHECIMENTO
+        </h1>
+    </header>
+
+    <!-- Container Principal do Jogo (HIDDEN ATÉ O INÍCIO) -->
+    <div id="main-quiz-container" class="w-full max-w-7xl flex flex-col lg:flex-row gap-6 hidden p-4"> <!-- ADICIONADO: p-4 para manter o padding principal -->
+
+        <!-- Coluna Principal do Quiz (Esquerda) -->
+        <main class="lg:w-3/4 flex flex-col gap-6">
+            
+            <!-- Caixa de Pergunta -->
+            <div id="quiz-box" class="main-quiz-box p-6 sm:p-8 rounded-lg shadow-2xl min-h-[300px] flex flex-col justify-center">
+                <h2 class="text-xl sm:text-2xl font-bold mb-4" id="quiz-title">
+                    Pergunta
+                </h2>
+                <p id="question-text" class="text-lg sm:text-xl font-medium">
+                    Aguardando Carregamento...
+                </p>
+                <p id="topic-info" class="text-sm italic mt-2">
+                    Conteúdo: 
+                </p>
+            </div>
+
+            <!-- Opções de Resposta -->
+            <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- As opções serão inseridas aqui via JavaScript -->
+            </div>
+            
+            <!-- Botão Próxima Pergunta -->
+            <button id="next-question-btn" class="button-next px-8 py-4 rounded-lg font-bold text-lg shadow-xl self-center transition duration-300 transform hover:scale-[1.02] hidden">
+                PRÓXIMA PERGUNTA
+            </button>
+            
+            <!-- Botão de Revisão (Oculto até o fim do quiz) -->
+            <button id="review-btn" class="bg-yellow-500 hover:bg-yellow-600 px-8 py-4 rounded-lg font-bold text-lg shadow-xl self-center transition duration-300 transform hover:scale-[1.02] mt-4 hidden">
+                INICIAR REVISÃO
+            </button>
+            
+            <!-- Botão de Reiniciar (Oculto até o fim do quiz) -->
+            <button id="restart-btn" class="bg-blue-500 hover:bg-blue-600 px-8 py-4 rounded-lg font-bold text-lg shadow-xl self-center transition duration-300 transform hover:scale-[1.02] mt-4 hidden">
+                REINICIAR
+            </button>
+
+            <!-- Botão Tentar Novamente (Oculto até o fim da revisão com erro) -->
+             <button id="retry-btn" class="bg-purple-600 hover:bg-purple-700 px-8 py-4 rounded-lg font-bold text-lg shadow-xl self-center transition duration-300 transform hover:scale-[1.02] mt-4 hidden">
+                TENTAR NOVAMENTE
+            </button>
+
+        </main>
+
+        <!-- Barra Lateral (Direita) - Simplificada -->
+        <aside class="lg:w-1/4 flex flex-col gap-4">
+            
+            <!-- Botão PARAR (Topo da Sidebar) -->
+            <button id="parar-btn" class="button-parar px-6 py-3 rounded-lg font-bold text-xl shadow-xl transition duration-300 hover:opacity-90">
+                PARAR
+            </button>
+
+            <!-- NOVO: Tempo Gasto (Contador Progressivo) -->
+            <div class="sidebar-box p-4 rounded-lg shadow-xl text-center">
+                <p class="font-bold text-sm">TEMPO GASTO</p>
+                <div id="progressive-timer-display" class="timer-display font-mono font-extrabold">00:00:00</div>
+            </div>
+            
+            <!-- NOVAS LINHAS DE VIDA (AJUDAR, DICA, EXEMPLO) -->
+            <div class="grid grid-cols-3 gap-2 mt-2">
+                <!-- AJUDAR (Ajuda Completa) -->
+                <button id="ajudar-btn" class="lifeline-button p-3 rounded-lg text-center font-bold text-xs sm:text-base disabled:bg-gray-700">
+                    <span class="text-2xl block">💡</span> AJUDAR
+                </button>
+                <!-- DICA (Dica Simples - Antigo Hint) -->
+                <button id="dica-btn" class="lifeline-button p-3 rounded-lg text-center font-bold text-xs sm:text-base disabled:bg-gray-700">
+                    <span class="text-2xl block">🔍</span> DICA
+                </button>
+                <!-- EXEMPLO (Exemplo Similar Resolvido) -->
+                <button id="exemplo-btn" class="lifeline-button p-3 rounded-lg text-center font-bold text-xs sm:text-base disabled:bg-gray-700">
+                    <span class="text-2xl block">📋</span> EXEMPLO
+                </button>
+            </div>
+            
+            <!-- Pontuação Atual - Simplificada -->
+            <div class="sidebar-box p-4 rounded-lg shadow-xl mt-4">
+                <p class="text-xl font-bold mb-2">PONTUAÇÃO: <span id="current-score" class="font-mono text-yellow-300">0</span></p>
+                <hr class="border-gray-500 mb-2">
+                <p>ACERTOS: <span id="consecutive-correct" class="font-mono text-lg">0</span></p>
+                <!-- ALTERADO: 1 MIL para 1 PONTO -->
+                <p>PRÓXIMO: <span class="font-mono text-lg text-green-300">1 PONTO</span></p>
+                <div id="message-box" class="mt-4 p-2 bg-yellow-600 rounded text-sm hidden"></div>
+            </div>
+            
+            <!-- NOVO BOTÃO CLASSIFICAÇÃO -->
+            <button id="ranking-btn" class="bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg font-bold text-xl shadow-xl transition duration-300 hover:opacity-90 mt-4">
+                CLASSIFICAÇÃO
+            </button>
+
+        </aside>
+    </div>
+
+    <!-- JavaScript do Quiz -->
+    <script type="module">
+        // Importações do Firebase (Usando URLs do CDN para ambiente de arquivo único)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, getDocs, limit, serverTimestamp, setLogLevel, doc, onSnapshot, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Array de objetos com as 10 perguntas PRINCIPAIS
+        const questions = [
+            {
+                topic: "Geometria Plana (Semelhança e Trigonometria)",
+                question: "Um arquiteto precisa fazer um projeto para uma casa. Ele usou uma figura semelhante para a planta da casa. Qual das alternativas apresenta figuras semelhantes?",
+                options: ["Um triângulo e um retângulo.", "Dois triângulos com os mesmos ângulos, mas lados diferentes.", "Um círculo e uma elipse.", "Um quadrado e um retângulo."],
+                answerIndex: 1, // B) Dois triângulos com os mesmos ângulos, mas lados diferentes.
+                explanation: "Figuras semelhantes mantêm a proporção entre os lados correspondentes e possuem os ângulos internos congruentes. A igualdade de ângulos garante a semelhança mesmo com tamanhos (lados) diferentes.",
+                dica_simples: "Semelhança exige a manutenção dos ângulos e proporcionalidade dos lados, não a igualdade dos lados.",
+                ajudar_completa: "Para que duas figuras sejam semelhantes, a única regra rígida é que os ângulos internos sejam mantidos exatamente iguais. O tamanho (comprimento dos lados) pode ser diferente, desde que a proporção entre os lados correspondentes seja mantida (razão de semelhança). Se os ângulos são iguais, a semelhança está garantida, independentemente do comprimento dos lados.",
+                exemplo_similar: "Exemplo: Um mapa da cidade é semelhante à cidade real. Os ângulos das ruas são os mesmos, mas o tamanho no papel é muito menor. Assim, a forma é idêntica (ângulos iguais), mas o tamanho é diferente."
+            },
+            {
+                topic: "Geometria Plana (Teorema de Pitágoras)",
+                question: "Um triângulo retângulo tem um cateto medindo 3 cm e outro cateto medindo 4 cm. Qual é a medida da hipotenusa?",
+                options: ["5 cm", "7 cm", "6 cm", "8 cm"],
+                answerIndex: 0, // A) 5 cm
+                explanation: "Pelo Teorema de Pitágoras (a² + b² = c²), temos 3² + 4² = c². 9 + 16 = 25. A raiz quadrada de 25 é 5 cm.",
+                dica_simples: "Use a fórmula: cateto² + cateto² = hipotenusa². Lembre-se que 3, 4 e 5 formam uma terna pitagórica.",
+                ajudar_completa: "O Teorema de Pitágoras se aplica a triângulos retângulos. A soma dos quadrados dos catetos (os lados que formam o ângulo de 90 graus) é igual ao quadrado da hipotenusa (o lado oposto ao ângulo de 90 graus). Use a fórmula: a² + b² = c², onde 'c' é a hipotenusa e 'a' e 'b' são os catetos.",
+                exemplo_similar: "Exemplo: Se os catetos medem 6 e 8, a hipotenusa seria: 6² + 8² = 36 + 64 = 100. Hipotenusa = 10."
+            },
+            {
+                topic: "Geometria Espacial (Planificação)",
+                question: "Qual das opções abaixo representa corretamente a planificação de um cubo?",
+                options: ["Um quadrado e um triângulo.", "Seis quadrados dispostos em cruz.", "Um círculo e um quadrado.", "Um retângulo e dois triângulos."],
+                answerIndex: 1, // B) Seis quadrados dispostos em cruz.
+                explanation: "Um cubo é composto por 6 faces quadradas. A planificação mais comum é a cruz, onde quatro quadrados estão em linha, e um em cada lado do segundo quadrado.",
+                dica_simples: "Um cubo tem 6 faces quadradas idênticas. Pense em como você o 'desmontaria' em uma folha plana.",
+                ajudar_completa: "Um cubo é um sólido platônico com 6 faces, 12 arestas e 8 vértices. Todas as faces são quadradas e iguais. A planificação é a representação plana dessas 6 faces desdobradas. O desenho mais comum e fácil de visualizar é a 'cruz' ou 'T', onde uma fileira de quatro quadrados tem um quadrado anexado acima e outro abaixo do segundo quadrado.",
+                exemplo_similar: "Exemplo: A planificação de uma caixa de pizza quadrada é um quadrado (fundo) e quatro retângulos laterais (paredes). Já o cubo só tem faces quadradas. Pense em como seria a planificação de um dado."
+            },
+            {
+                topic: "Geometria Espacial (Relação de Euler)",
+                question: "Um cubo tem 8 vértices, 12 arestas e 6 faces. Qual é a relação que podemos estabelecer entre essas características?",
+                options: ["O número de arestas é igual ao número de faces.", "O número de vértices é igual ao número de faces.", "A soma do número de vértices é igual à soma do número de arestas e faces.", "A soma do número de vértices e faces é igual ao número de arestas somado a 2."],
+                answerIndex: 3, // D) A soma do número de vértices e faces é igual ao número de arestas somado a 2.
+                explanation: "A relação correta é a Relação de Euler: V - A + F = 2, ou V + F = A + 2. (8 + 6 = 12 + 2, ou seja, 14 = 14).",
+                dica_simples: "A fórmula de Euler é V - A + F = 2. Substitua os valores conhecidos e resolva para a relação.",
+                ajudar_completa: "A Relação de Euler é fundamental para poliedros convexos: V - A + F = 2, onde V = Vértices, A = Arestas e F = Faces. A pergunta pede uma relação entre essas características. Reorganizando a fórmula: V + F = A + 2. A soma de Vértices e Faces é igual ao número de Arestas mais 2.",
+                exemplo_similar: "Exemplo (Tetraedro): 4 Vértices, 6 Arestas, 4 Faces. V+F = 4+4 = 8. A+2 = 6+2 = 8. A relação se mantém: V+F = A+2."
+            },
+            {
+                topic: "Geometria Analítica (Reta e Ponto)",
+                question: "Um ponto A está localizado nas coordenadas (3, 4) e um ponto B nas coordenadas (7, 1). Qual é a localização do ponto médio entre A e B?",
+                options: ["(5, 2.5)", "(10, 5)", "(4, 3)", "(3.5, 4.5)"],
+                answerIndex: 0, // A) (5, 2.5)
+                explanation: "A coordenada do ponto médio (Xm, Ym) é a média aritmética das coordenadas x e y. Xm = (3 + 7) / 2 = 5. Ym = (4 + 1) / 2 = 2.5. O ponto médio é (5, 2.5).",
+                dica_simples: "O ponto médio é a média das coordenadas: (x1 + x2)/2 e (y1 + y2)/2.",
+                ajudar_completa: "Para encontrar o ponto médio (M) entre dois pontos A(x1, y1) e B(x2, y2), você deve calcular a média aritmética das coordenadas x e a média aritmética das coordenadas y. Fórmula: M = ( (x1 + x2) / 2 , (y1 + y2) / 2 ). Basta somar as coordenadas e dividir por dois.",
+                exemplo_similar: "Exemplo: O ponto médio entre (1, 5) e (9, 15) seria: Xm = (1+9)/2 = 5. Ym = (5+15)/2 = 10. Ponto Médio = (5, 10)."
+            },
+            // NOVAS 5 QUESTÕES ADICIONADAS AO QUIZ PRINCIPAL
+            { // Adicionada do tópico Semelhança/Trigonometria
+                topic: "Geometria Plana (Semelhança e Trigonometria)",
+                question: "Em um triângulo retângulo, se o ângulo oposto ao cateto de 3 cm é de 30 graus, qual é o valor do seno desse ângulo?",
+                options: ["1/2", "3/5", "1", "raiz(3)/2"],
+                answerIndex: 0, 
+                explanation: "O valor do seno de 30 graus é uma constante trigonométrica: Sen(30°) = 1/2. O valor do cateto (3 cm) é uma distração neste caso.",
+                dica_simples: "Lembre-se da tabela de ângulos notáveis: Seno de 30 graus.",
+                ajudar_completa: "Para encontrar o valor do seno, utilize a razão trigonométrica: Seno = Cateto Oposto / Hipotenusa. No entanto, para ângulos notáveis como 30°, 45° e 60°, o valor do seno é fixo. O lado oposto é fornecido, mas não é necessário, pois Sen(30°) é um valor fundamental.",
+                exemplo_similar: "Exemplo: O valor do cosseno de 60 graus também é 1/2."
+            },
+            { // Adicionada do tópico Pitágoras
+                topic: "Geometria Plana (Teorema de Pitágoras)",
+                question: "Durante uma aula de matemática, a professora desenhou um triângulo retângulo. Um dos catetos mede 5 cm e o outro cateto mede 12 cm. Qual é a medida da hipotenusa?",
+                options: ["13 cm", "11 cm", "10 cm", "15 cm"],
+                answerIndex: 0, 
+                explanation: "Pelo Teorema de Pitágoras (a² + b² = c²): 5² + 12² = c². 25 + 144 = 169. A raiz quadrada de 169 é 13 cm.",
+                dica_simples: "Lembre-se da terna pitagórica 5, 12 e 13.",
+                ajudar_completa: "Use a fórmula: (Cateto 1)² + (Cateto 2)² = (Hipotenusa)². Substitua os valores: 5² + 12² = c². Calcule a soma e, em seguida, encontre a raiz quadrada do resultado.",
+                exemplo_similar: "Exemplo: Em um triângulo com catetos 9 e 12, a hipotenusa é 15, pois 9² + 12² = 81 + 144 = 225, e a raiz de 225 é 15."
+            },
+            { // Adicionada do tópico Planificação
+                topic: "Geometria Espacial (Planificação)",
+                question: "Um estudante precisa desenhar a planificação de um paralelepípedo. Quantas faces ele deve desenhar?",
+                options: ["4", "6", "8", "5"],
+                answerIndex: 1, // B) 6
+                explanation: "Um paralelepípedo (ou bloco retangular) tem 6 faces retangulares (ou quadradas, no caso do cubo): base inferior, base superior, e 4 faces laterais.",
+                dica_simples: "Lembre-se de contar todas as faces, incluindo a superior e a inferior.",
+                ajudar_completa: "O paralelepípedo é um hexaedro, ou seja, possui 6 faces. Ele é composto por três pares de faces idênticas: as duas bases e dois pares de faces laterais. Ao planificar, você deve ter 6 figuras retangulares.",
+                exemplo_similar: "Exemplo: Um prisma triangular tem 5 faces (3 retangulares laterais e 2 bases triangulares)."
+            },
+            { // Adicionada do tópico Relação de Euler
+                topic: "Geometria Espacial (Relação de Euler)",
+                question: "Em um poliedro, se possui 6 faces e 8 vértices, quantas arestas esse poliedro possui?",
+                options: ["6", "12", "10", "8"],
+                answerIndex: 1, // B) 12
+                explanation: "Usando a Relação de Euler: V - A + F = 2. 8 - A + 6 = 2. 14 - A = 2. A = 12 arestas. (Este é um cubo).",
+                dica_simples: "Use a Relação de Euler: V + F = A + 2.",
+                ajudar_completa: "A Relação de Euler (V - A + F = 2) é a chave. V = 8, F = 6. 8 - A + 6 = 2. 14 - A = 2. A = 12.",
+                exemplo_similar: "Exemplo: Um poliedro com 10 vértices e 7 faces tem 15 arestas (10 + 7 = A + 2; A = 17 - 2 = 15)."
+            },
+            { // Adicionada do tópico Geometria Analítica
+                topic: "Geometria Analítica (Reta e Ponto)",
+                question: "Qual é a equação da reta que passa pelos pontos (1, 2) e (3, 4)?",
+                options: ["y = 2x + 1", "y = x + 1", "y = 2x", "y = 3x - 1"],
+                answerIndex: 1, // B) y = x + 1
+                explanation: "1. Coeficiente angular (m): m = (4 - 2) / (3 - 1) = 1. 2. Equação (y - y1 = m(x - x1)): y - 2 = 1(x - 1). y = x - 1 + 2. y = x + 1.",
+                dica_simples: "Primeiro encontre o coeficiente angular m = (y2 - y1) / (x2 - x1).",
+                ajudar_completa: "1. Encontre o coeficiente angular (m): m = (y2 - y1) / (x2 - x1). 2. Use a equação fundamental da reta com um dos pontos: y - y1 = m(x - x1).",
+                exemplo_similar: "Exemplo: A reta que passa por (1, 1) e (2, 3) tem m = 2. A equação é y = 2x - 1."
+            }
+        ];
+
+        // Perguntas adicionais para o MODO REVISÃO (Expandidas para 6 por tópico)
+        // O conteúdo movido para 'questions' foi removido desta seção.
+        const reviewQuestionSet = {
+            "Geometria Plana (Semelhança e Trigonometria)": [
+                { // P14 do usuário
+                    question: "Um engenheiro desenhou um triângulo retângulo em um projeto. Se o ângulo de 45 graus está oposto a um cateto de 10 cm, qual é a medida do outro cateto?",
+                    options: ["10 cm", "5 cm", "7 cm", "8 cm"],
+                    answerIndex: 0, 
+                    explanation: "Se um ângulo agudo é de 45 graus, o outro também é (180 - 90 - 45 = 45). Assim, o triângulo é isósceles (dois ângulos iguais), e os catetos opostos aos ângulos de 45 graus são iguais. O outro cateto também mede 10 cm.",
+                    dica_simples: "Se um triângulo retângulo tem um ângulo de 45°, ele é isósceles, o que significa que os catetos são iguais.",
+                    ajudar_completa: "Em um triângulo, a soma dos ângulos internos é 180°. Se já temos um ângulo de 90° e um de 45°, o terceiro ângulo é 45°. Em geometria, lados opostos a ângulos iguais são congruentes. Portanto, os dois catetos opostos aos ângulos de 45° devem ter o mesmo comprimento.",
+                    exemplo_similar: "Exemplo: Se o cateto oposto a 30° mede 5, o oposto a 60° mede 5 * raiz(3) e a hipotenusa mede 10."
+                },
+                { // NOVA PERGUNTA 1 (Criada por mim)
+                    question: "Dois hexágonos são semelhantes. O perímetro do hexágono menor é 30 cm. Se a razão de semelhança do menor para o maior é de 1:2, qual é o perímetro do hexágono maior?",
+                    options: ["30 cm", "60 cm", "45 cm", "90 cm"],
+                    answerIndex: 1, 
+                    explanation: "A razão entre os perímetros de figuras semelhantes é igual à razão de semelhança dos lados. Razão = Perímetro menor / Perímetro maior. 1/2 = 30 / x. x = 60 cm.",
+                    dica_simples: "A razão entre os perímetros é a mesma que a razão entre os lados.",
+                    ajudar_completa: "Se a razão de semelhança entre os lados é k, a razão entre os perímetros também é k. Perímetro Maior = Perímetro Menor / k. Neste caso: Perímetro Maior = 30 / (1/2) = 30 * 2 = 60 cm.",
+                    exemplo_similar: "Exemplo: Se a razão entre dois quadrados é 1/5, e o perímetro do menor é 8 cm, o perímetro do maior é 40 cm (8 * 5)."
+                },
+                { // NOVA Q4 (Semelhança)
+                    question: "Qual a altura de uma árvore que projeta uma sombra de 15m, sabendo que um poste de 4m projeta uma sombra de 5m no mesmo instante?",
+                    options: ["10 m", "12 m", "15 m", "16 m"],
+                    answerIndex: 1, // 12m (4/5 = x/15 -> 5x = 60 -> x=12)
+                    explanation: "Use a semelhança de triângulos formada pela altura e sombra dos objetos. Altura do poste / Sombra do poste = Altura da árvore / Sombra da árvore. 4/5 = x/15. 5x = 60. x = 12m.",
+                    dica_simples: "A proporção entre altura e sombra é a mesma para os dois objetos (poste e árvore).",
+                    ajudar_completa: "Monte a proporção: Altura_poste / Sombra_poste = Altura_arvore / Sombra_arvore. 4/5 = x/15. Para isolar x, multiplique 4 por 15 e divida o resultado por 5. x = 60/5 = 12.",
+                    exemplo_similar: "Exemplo: Um homem de 2m projeta 3m de sombra. Uma torre que projeta 9m de sombra tem 6m de altura (2/3 = x/9 -> 3x=18 -> x=6)."
+                },
+                { // NOVA Q5 (Trigonometria - Tangente)
+                    question: "Qual a tangente de um ângulo agudo em um triângulo retângulo se o cateto oposto a ele mede 8 e o cateto adjacente mede 6?",
+                    options: ["4/5", "3/4", "4/3", "5/4"],
+                    answerIndex: 2, // 4/3
+                    explanation: "Tangente é a razão entre o Cateto Oposto e o Cateto Adjacente. Tan = Oposto / Adjacente = 8/6. Simplificando, temos 4/3.",
+                    dica_simples: "Tangente = Cateto Oposto / Cateto Adjacente.",
+                    ajudar_completa: "A Tangente é uma das três razões trigonométricas principais (Seno, Cosseno, Tangente). Ela é definida como a razão entre o comprimento do lado oposto ao ângulo e o comprimento do lado adjacente ao ângulo no triângulo retângulo. Tan = 8/6 = 4/3.",
+                    exemplo_similar: "Exemplo: Se o cateto oposto mede 10 e o adjacente mede 5, a tangente é 10/5 = 2."
+                },
+                 { // NOVA Q6 (Trigonometria - Relação Fundamental)
+                    question: "Se o seno de um ângulo agudo é 0.8, qual é o valor do cosseno desse ângulo em um triângulo retângulo?",
+                    options: ["0.2", "0.4", "0.6", "0.8"],
+                    answerIndex: 2, // 0.6
+                    explanation: "Use a Relação Fundamental da Trigonometria: sen²(x) + cos²(x) = 1. (0.8)² + cos²(x) = 1. 0.64 + cos²(x) = 1. cos²(x) = 0.36. cos(x) = 0.6.",
+                    dica_simples: "Lembre-se da relação: Sen² + Cos² = 1.",
+                    ajudar_completa: "A Relação Fundamental da Trigonometria (RFT) é sempre válida: Seno ao quadrado de um ângulo mais Cosseno ao quadrado do mesmo ângulo é igual a 1. 0.8² = 0.64. 1 - 0.64 = 0.36. A raiz quadrada de 0.36 é 0.6.",
+                    exemplo_similar: "Exemplo: O valor do cosseno de 60 graus também é 1/2." // Exemplo corrigido
+                }
+            ],
+            "Geometria Plana (Teorema de Pitágoras)": [
+                { // P11 do usuário
+                    question: "Um triângulo possui lados de medidas 7 cm, 24 cm e 25 cm. Esse triângulo é retângulo? Justifique.",
+                    options: ["Sim, porque 7² + 24² = 25².", "Não, porque 7² + 24² é diferente de 25².", "Sim, porque 25² é o maior lado.", "Não, porque não tem um ângulo reto."],
+                    answerIndex: 0, 
+                    explanation: "Para ser retângulo, deve satisfazer Pitágoras: 7² + 24² = 49 + 576 = 625. E 25² = 625. Como 625 = 625, é um triângulo retângulo.",
+                    dica_simples: "Verifique se a soma dos quadrados dos dois menores lados é igual ao quadrado do maior lado.",
+                    ajudar_completa: "O teorema de Pitágoras também serve como condição de existência para triângulos retângulos (teorema recíproco). Se a soma do quadrado dos dois menores lados for igual ao quadrado do maior lado, o triângulo é retângulo. Aqui: 49 + 576 = 625. 625 = 625.",
+                    exemplo_similar: "Exemplo: Um triângulo com lados 2, 3 e 4 não é retângulo, pois 2² + 3² = 4 + 9 = 13, e 4² = 16. Como 13 ≠ 16, ele não é retângulo."
+                },
+                { // NOVA PERGUNTA 2 (Usando conceito de escada)
+                    question: "Uma escada de 5 metros está apoiada em uma parede. Se a base da escada está a 3 metros da parede, a que altura (em metros) a escada atinge a parede?",
+                    options: ["3 m", "4 m", "5 m", "6 m"],
+                    answerIndex: 1, 
+                    explanation: "A escada (5m) é a hipotenusa, a distância da base (3m) é um cateto. h² + 3² = 5². h² + 9 = 25. h² = 16. h = 4 metros.",
+                    dica_simples: "A escada forma a hipotenusa do triângulo retângulo.",
+                    ajudar_completa: "Represente a situação como um triângulo retângulo onde a parede e o chão formam o ângulo de 90°. A escada é o lado mais longo (hipotenusa = 5). A distância no chão é um cateto (3). Use Pitágoras para encontrar o outro cateto (altura): h² + 3² = 5².",
+                    exemplo_similar: "Exemplo: Se a escada (hipotenusa) fosse 13m e a base (cateto) fosse 5m, a altura seria 12m, pois 5² + 12² = 13²."
+                },
+                { // NOVA Q4 (Diagonal do quadrado)
+                    question: "A diagonal de um quadrado mede 10 cm. Qual é a medida do lado do quadrado?",
+                    options: ["10 / raiz(2) cm", "5 cm", "10 cm", "10 * raiz(2) cm"],
+                    answerIndex: 0, // 10 / raiz(2) cm
+                    explanation: "A diagonal (d) de um quadrado é dada por d = L * raiz(2), onde L é o lado. Se d = 10, então 10 = L * raiz(2). L = 10 / raiz(2) cm.",
+                    dica_simples: "A diagonal divide o quadrado em dois triângulos retângulos isósceles. Use L² + L² = d².",
+                    ajudar_completa: "Use Pitágoras: L² + L² = d². 2L² = 100. L² = 50. L = raiz(50) = 5 * raiz(2). A resposta 10/raiz(2) é equivalente (racionalizando, 10*raiz(2) / 2 = 5*raiz(2)).",
+                    exemplo_similar: "Exemplo: Se o lado do quadrado é 4 cm, a diagonal é 4 * raiz(2) cm."
+                },
+                { // NOVA Q5 (Triângulo 60x80)
+                    question: "Um campo retangular tem 80m de comprimento e 60m de largura. Qual o comprimento da diagonal (em metros)?",
+                    options: ["100 m", "120 m", "140 m", "160 m"],
+                    answerIndex: 0, // 100m
+                    explanation: "Use Pitágoras: 60² + 80² = d². 3600 + 6400 = 10000. d = raiz(10000) = 100 metros.",
+                    dica_simples: "O comprimento e a largura são catetos. A diagonal é a hipotenusa.",
+                    ajudar_completa: "As dimensões do campo (largura e comprimento) são os catetos de um triângulo retângulo, e a diagonal é a hipotenusa. Note que 60, 80 e 100 são múltiplos de 6, 8 e 10, que formam outra terna pitagórica (60² + 80² = 100²).",
+                    exemplo_similar: "Exemplo: Um retângulo 3m por 4m tem uma diagonal de 5m."
+                },
+                { // NOVA Q6 (Distância Horizontal - Rampa)
+                    question: "Uma rampa de acesso tem comprimento (hipotenusa) de 10 metros e atinge uma altura (cateto) de 6 metros. Qual é a distância horizontal (outro cateto) percorrida?",
+                    options: ["8 m", "4 m", "12 m", "16 m"],
+                    answerIndex: 0, // 8 m
+                    explanation: "Use Pitágoras: x² + 6² = 10². x² + 36 = 100. x² = 64. x = 8 metros.",
+                    dica_simples: "Hipotenusa² - Cateto² = Cateto².",
+                    ajudar_completa: "O comprimento da rampa é a hipotenusa (10) e a altura é um cateto (6). x² + 6² = 10². x² = 100 - 36. x² = 64. x = 8.",
+                    exemplo_similar: "Exemplo: Se a hipotenusa fosse 17m e o cateto fosse 8m, o outro cateto seria 15m (8, 15, 17 é uma terna pitagórica)."
+                }
+            ],
+            "Geometria Espacial (Planificação)": [
+                { // NOVA PERGUNTA 3 (Criada por mim - Cilindro)
+                    question: "A planificação de um cilindro circular reto é composta por quais figuras geométricas planas?",
+                    options: ["Dois círculos e um retângulo.", "Um círculo e um retângulo.", "Três círculos.", "Um quadrado e dois círculos."],
+                    answerIndex: 0, // A) Dois círculos e um retângulo.
+                    explanation: "A planificação de um cilindro é composta por duas bases circulares (superior e inferior) e uma superfície lateral retangular.",
+                    dica_simples: "Pense no rótulo de uma lata: ele é um retângulo que envolve os dois círculos (tampa e fundo).",
+                    ajudar_completa: "A superfície de um cilindro é formada pela base inferior (círculo), base superior (círculo) e pela área lateral. Se você 'abrir' a área lateral, ela forma um retângulo cuja altura é a altura do cilindro e cuja base é o comprimento da circunferência da base.",
+                    exemplo_similar: "Exemplo: A planificação de um cone é composta por um círculo (base) e um setor circular (área lateral)."
+                },
+                { // Planificação de Pirâmide
+                    question: "A planificação de uma pirâmide de base quadrada é composta por quais formas geométricas?",
+                    options: ["Um quadrado e quatro retângulos.", "Um quadrado e quatro triângulos.", "Seis triângulos.", "Um retângulo e dois triângulos."],
+                    answerIndex: 1, // B) Um quadrado e quatro triângulos.
+                    explanation: "A pirâmide de base quadrada tem uma base (um quadrado) e quatro faces laterais (quatro triângulos).",
+                    dica_simples: "A planificação inclui a base (quadrado) e todas as faces laterais (triângulos).",
+                    ajudar_completa: "Uma pirâmide possui uma única base e faces laterais triangulares que se encontram no vértice. Se a base é quadrada, ela é formada por 1 quadrado e 4 triângulos.",
+                    exemplo_similar: "Exemplo: Uma pirâmide de base triangular (tetraedro) é composta por 4 triângulos (incluindo a base)."
+                },
+                { // NOVA Q4 (Faces do prisma hexagonal)
+                    question: "Quantos retângulos são necessários para planificar as faces laterais de um prisma de base hexagonal?",
+                    options: ["4", "5", "6", "8"],
+                    answerIndex: 2, // 6
+                    explanation: "Um hexágono tem 6 lados. Um prisma hexagonal tem 6 faces laterais, e todas são retangulares.",
+                    dica_simples: "O número de faces laterais é igual ao número de lados da base.",
+                    ajudar_completa: "Um prisma tem duas bases (neste caso, hexágonos) e faces laterais retangulares. O número de faces laterais é sempre igual ao número de lados da base. Como a base é hexagonal (6 lados), são necessários 6 retângulos.",
+                    exemplo_similar: "Exemplo: Um prisma de base triangular precisa de 3 retângulos para as faces laterais."
+                },
+                { // NOVA Q5 (Planificação do cone)
+                    question: "A planificação de um cone circular reto é composta por um círculo (base) e uma figura que representa sua lateral. Que figura é essa?",
+                    options: ["Um triângulo", "Um retângulo", "Um setor circular", "Um semicírculo"],
+                    answerIndex: 2, // Setor circular
+                    explanation: "A lateral do cone, quando aberta, forma um setor circular (uma fatia) de um círculo maior, cuja área depende do raio e da geratriz do cone.",
+                    dica_simples: "Pense em um chapéu de aniversário. A parte curva aberta não é um triângulo.",
+                    ajudar_completa: "Ao contrário dos prismas e cilindros, cuja lateral é retangular, a lateral do cone é curva e cônica. Ao ser planificada, ela se transforma em um setor circular, ou seja, a porção de um círculo delimitada por dois raios e um arco.",
+                    exemplo_similar: "Exemplo: A planificação de uma pirâmide é formada por sua base e por triângulos laterais."
+                },
+                { // NOVA Q6 (Não planificável)
+                    question: "Qual dos seguintes sólidos não possui planificação perfeita em superfícies planas (é uma superfície não-desenvolvente)?",
+                    options: ["Cubo", "Cilindro", "Cone", "Esfera"],
+                    answerIndex: 3, // Esfera
+                    explanation: "Cubo, cilindro e cone são superfícies desenvolvíveis, ou seja, podem ser abertas em um plano. A esfera é uma superfície não-desenvolvível e, portanto, não pode ser planificada sem distorção.",
+                    dica_simples: "Qual sólido é totalmente curvo e sem cantos?",
+                    ajudar_completa: "Planificação só é possível para sólidos que podem ser 'desdobrados' em um plano sem que a área seja alterada. A esfera é uma superfície de dupla curvatura, e sua representação plana (como nos mapas) sempre exige distorção.",
+                    exemplo_similar: "Exemplo: O toro (formato de boia) também não é planificável."
+                }
+            ],
+            "Geometria Espacial (Relação de Euler)": [
+                { // P13 do usuário
+                    question: "Um poliedro tem 12 arestas e 6 faces. Qual é o número de vértices desse poliedro?",
+                    options: ["6", "8", "12", "10"],
+                    answerIndex: 1, // B) 8
+                    explanation: "Usando a Relação de Euler: V - A + F = 2. V - 12 + 6 = 2. V - 6 = 2. V = 8 vértices.",
+                    dica_simples: "A fórmula é V + F = A + 2. Substitua os valores e resolva para V.",
+                    ajudar_completa: "V - A + F = 2. O número de arestas (A) é 12 e o número de faces (F) é 6. V - 12 + 6 = 2. V - 6 = 2. V = 8.",
+                    exemplo_similar: "Exemplo: Um poliedro com 7 vértices e 7 faces tem 12 arestas (7 + 7 = A + 2; A = 14 - 2 = 12)."
+                },
+                { // Prisma Triangular
+                    question: "Um poliedro convexo possui 5 faces e 6 vértices. Quantas arestas ele possui?",
+                    options: ["9", "10", "11", "7"],
+                    answerIndex: 0, // A) 9
+                    explanation: "Usando a Relação de Euler: V - A + F = 2. 6 - A + 5 = 2. 11 - A = 2. A = 9 arestas.",
+                    dica_simples: "V + F = A + 2.",
+                    ajudar_completa: "V = 6 e F = 5. 6 - A + 5 = 2. 11 - A = 2. A = 9. O poliedro é um prisma triangular.",
+                    exemplo_similar: "Exemplo: O octaedro tem 6 vértices e 8 faces, portanto 12 arestas (6 + 8 = A + 2; A = 14 - 2 = 12)."
+                },
+                { // NOVA Q4 (Dodecaedro - 12 faces)
+                    question: "Um dodecaedro (poliedro com 12 faces) tem 20 vértices. Quantas arestas ele possui?",
+                    options: ["30", "32", "28", "24"],
+                    answerIndex: 0, // 30
+                    explanation: "Relação de Euler: V + F = A + 2. 20 (V) + 12 (F) = A + 2. 32 = A + 2. A = 30 arestas.",
+                    dica_simples: "Lembre-se: Faces mais Vértices é igual a Arestas mais 2.",
+                    ajudar_completa: "Substitua V=20 e F=12 na fórmula V + F = A + 2. 20 + 12 = A + 2. 32 = A + 2. A = 30.",
+                    exemplo_similar: "Exemplo: Um icosaedro tem 12 vértices e 20 faces, portanto 30 arestas (12 + 20 = A + 2)."
+                },
+                { // NOVA Q5 (Prisma base pentagonal)
+                    question: "Um prisma com base pentagonal (5 lados) tem 7 faces e 10 vértices. Quantas arestas ele possui?",
+                    options: ["12", "14", "15", "18"],
+                    answerIndex: 2, // 15
+                    explanation: "Relação de Euler: V + F = A + 2. 10 (V) + 7 (F) = A + 2. 17 = A + 2. A = 15 arestas. (Prismas de base n têm 2n vértices, n+2 faces e 3n arestas).",
+                    dica_simples: "Lembre-se da fórmula para poliedros convexos.",
+                    ajudar_completa: "V = 10, F = 7. 10 + 7 = A + 2. 17 = A + 2. A = 15.",
+                    exemplo_similar: "Exemplo: Uma base triangular tem 6 V, 5 F e 9 A."
+                },
+                { // NOVA Q6 (Pirâmide base triangular - Tetraedro)
+                    question: "Uma pirâmide de base triangular (tetraedro) tem 4 faces e 4 vértices. Quantas arestas esse poliedro possui?",
+                    options: ["4", "5", "6", "8"],
+                    answerIndex: 2, // 6
+                    explanation: "Relação de Euler: V + F = A + 2. 4 (V) + 4 (F) = A + 2. 8 = A + 2. A = 6 arestas.",
+                    dica_simples: "Um tetraedro é o poliedro mais simples: 4 faces, 4 vértices.",
+                    ajudar_completa: "O tetraedro é um dos sólidos platônicos. Seus valores são 4 Vértices, 4 Faces e 6 Arestas. 4 + 4 = 6 + 2.",
+                    exemplo_similar: "Exemplo: Uma pirâmide de base quadrada tem 5 V, 5 F e 8 A."
+                }
+            ],
+            "Geometria Analítica (Reta e Ponto)": [
+                { // P12 do usuário
+                    question: "A equação da reta gerada pelos pontos (2, 3) e (4, 7) é?",
+                    options: ["y = 2x – 1", "y = 2x + 2", "y = 3x – 3", "y = 2x + 1"],
+                    answerIndex: 0, // A) y = 2x - 1
+                    explanation: "1. Coeficiente angular (m): m = (7 - 3) / (4 - 2) = 2. 2. Equação: y - 3 = 2(x - 2). y = 2x - 4 + 3. y = 2x - 1.",
+                    dica_simples: "O coeficiente angular é 2. Use a fórmula da reta para descobrir o coeficiente linear 'b'.",
+                    ajudar_completa: "1. Encontre m: m = (7 - 3) / (4 - 2) = 2. 2. Use o ponto (2, 3) na equação reduzida y = mx + b: 3 = 2(2) + b. 3 = 4 + b. b = -1. Equação final: y = 2x - 1.",
+                    exemplo_similar: "Exemplo: A reta com m=3 que passa por (0, 5) tem equação y = 3x + 5."
+                },
+                { // NOVA PERGUNTA 4 (Criada por mim - Coeficiente angular)
+                    question: "Qual é o coeficiente angular (declividade) da reta representada pela equação y = 5x + 3?",
+                    options: ["5", "-3", "3", "2"],
+                    answerIndex: 0, // A) 5
+                    explanation: "Em uma equação reduzida da reta (y = mx + b), o coeficiente angular (declividade) é o valor 'm', que acompanha o x. Neste caso, m = 5.",
+                    dica_simples: "Em y = mx + b, 'm' é o coeficiente angular.",
+                    ajudar_completa: "A equação y = mx + b é a forma reduzida da equação da reta. O termo 'm' é o coeficiente angular e representa a inclinação ou declividade da reta, enquanto 'b' é o coeficiente linear (onde a reta corta o eixo y).",
+                    exemplo_similar: "Exemplo: Na equação y = -2x + 7, o coeficiente angular é -2, indicando uma reta decrescente."
+                },
+                { // NOVA Q4 (Distância entre dois pontos)
+                    question: "Qual é a distância exata entre os pontos A(2, 0) e B(5, 4)?",
+                    options: ["3", "4", "5", "raiz(13)"],
+                    answerIndex: 2, // 5
+                    explanation: "Use a fórmula da distância: d = raiz((x2 - x1)² + (y2 - y1)²). d = raiz((5 - 2)² + (4 - 0)²). d = raiz(3² + 4²). d = raiz(25) = 5.",
+                    dica_simples: "Use o Teorema de Pitágoras para calcular a hipotenusa formada pela diferença das coordenadas.",
+                    ajudar_completa: "A distância entre dois pontos no plano cartesiano é calculada como a hipotenusa de um triângulo retângulo imaginário cujos catetos são a diferença horizontal (delta x) e a diferença vertical (delta y). Distância = raiz((5-2)² + (4-0)²) = 5.",
+                    exemplo_similar: "Exemplo: A distância entre (0, 0) e (6, 8) é 10."
+                },
+                { // NOVA Q5 (Equação de reta paralela ao eixo x)
+                    question: "Uma reta é paralela ao eixo x e passa pelo ponto (3, 5). Qual é a sua equação?",
+                    options: ["x = 3", "y = 5", "y = x + 2", "y = 3x + 5"],
+                    answerIndex: 1, // y = 5
+                    explanation: "Retas paralelas ao eixo x (horizontal) têm o coeficiente angular m = 0. A equação é sempre y = k, onde k é a coordenada y do ponto. Como passa por (3, 5), a equação é y = 5.",
+                    dica_simples: "Reta horizontal (paralela ao eixo x) significa que o valor de y é constante.",
+                    ajudar_completa: "Se a reta é paralela ao eixo x, todos os pontos da reta têm a mesma coordenada y. O ponto fornecido é (3, 5), então y deve ser sempre 5. Se fosse paralela ao eixo y (vertical), a equação seria x = k.",
+                    exemplo_similar: "Exemplo: A reta paralela ao eixo x que passa por (-1, -4) é y = -4."
+                },
+                { // NOVA Q6 (Coeficiente linear)
+                    question: "O coeficiente linear da reta 2x + y = 6 é:",
+                    options: ["2", "6", "-2", "3"],
+                    answerIndex: 1, // 6
+                    explanation: "Para encontrar o coeficiente linear (b), isole y na equação (forma reduzida y = mx + b). y = -2x + 6. O coeficiente linear é o termo independente, que é 6.",
+                    dica_simples: "Isole Y para encontrar a forma reduzida da equação (y = mx + b).",
+                    ajudar_completa: "O coeficiente linear é o valor onde a reta intercepta o eixo y. Ele é o termo 'b' na forma reduzida y = mx + b. Ao isolar y na equação 2x + y = 6, obtemos y = -2x + 6. O valor de b é 6.",
+                    exemplo_similar: "Exemplo: Na equação y = 3x - 10, o coeficiente linear é -10."
+                }
+            ]
+        };
+        
+        // ====================================================================
+        // VARIÁVEIS DE ESTADO GLOBAIS (MOVIDAS PARA O TOPO PARA GARANTIR DEFINIÇÃO)
+        // ====================================================================
+        const REVIEW_EXIT_PASSWORD = '1234'; // SENHA FIXA
+        let weakestTopicName = ''; 
+        let quizMode = 'main'; // 'main' ou 'review'
+        let reviewQuestions = [];
+        let reviewIndex = -1;
+        let reviewCorrectCount = 0; 
+        let quizCompletedSuccessfully = false; // NOVO: Flag para acerto total no quiz principal
+        
+        let lifelineUsage = { ajudar: false, dica: false, exemplo: false };
+        let secondChanceActive = false; 
+
+        let topicPerformance = {
+            "Geometria Plana (Semelhança e Trigonometria)": { total: 0, correct: 0, wrong: 0 },
+            "Geometria Plana (Teorema de Pitágoras)": { total: 0, correct: 0, wrong: 0 },
+            "Geometria Espacial (Planificação)": { total: 0, correct: 0, wrong: 0 },
+            "Geometria Espacial (Relação de Euler)": { total: 0, correct: 0, wrong: 0 },
+            "Geometria Analítica (Reta e Ponto)": { total: 0, correct: 0, wrong: 0 }
+        };
+
+        let currentQuestionIndex = -1; 
+        let currentScore = 0;
+        let consecutiveCorrect = 0;
+        let timerInterval;
+        let timeLeft = 0; 
+        let quizActive = false;
+        
+        // NOVO CRONÔMETRO PROGRESSIVO
+        let totalTimeSeconds = 0; 
+        let progressiveTimerInterval;
+
+        // NOVO: Armazenamento de dados do usuário
+        let userName = ''; 
+        let userClass = ''; 
+
+        // FIREBASE VARS
+        let db, auth;
+        let appId;
+        let userId;
+
+        // NOVO: DECLARAÇÃO DE VARIÁVEIS DE REFERÊNCIA DO DOM
+        let startScreenEl, mainQuizContainerEl, startActionBtn, questionTextEl, topicInfoEl, optionsContainerEl, nextQuestionBtn, reviewBtn, restartBtn, retryBtn, ajudarBtn, dicaBtn, exemploBtn, progressiveTimerDisplayEl, currentScoreEl, consecutiveCorrectEl, quizBoxEl, messageBoxEl, userNameInputEl, userClassInputEl, startErrorEl, rankingBtn;
+        
+        // ====================================================================
+
+        // Novo: Função para formatar o tempo em H:M:S
+        function formatTime(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            const pad = (num) => String(num).padStart(2, '0');
+            return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+        }
+        
+        // Novo: Função para iniciar o cronômetro progressivo
+        function startProgressiveTimer() {
+            clearInterval(progressiveTimerInterval);
+            
+            progressiveTimerInterval = setInterval(() => {
+                totalTimeSeconds++;
+                if (progressiveTimerDisplayEl) {
+                    progressiveTimerDisplayEl.textContent = formatTime(totalTimeSeconds);
+                }
+            }, 1000);
+        }
+
+        // Novo: Função para parar o cronômetro progressivo
+        function stopProgressiveTimer() {
+            clearInterval(progressiveTimerInterval);
+        }
+
+        // --- FUNÇÕES FIREBASE (ADICIONADAS) ---
+
+        async function setupFirebase() {
+            setLogLevel('Debug');
+            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            
+            if (Object.keys(firebaseConfig).length === 0) {
+                console.warn("Firebase config não encontrada. A classificação estará desabilitada.");
+                return;
+            }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Autenticação
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                userId = auth.currentUser?.uid || `anon-${Math.random().toString(36).substring(2, 9)}`;
+                console.log("Firebase e autenticação configurados. User ID:", userId);
+
+            } catch (error) {
+                console.error("Erro ao configurar o Firebase ou autenticar:", error);
+            }
+        }
+
+        async function saveResultToFirestore() {
+            if (!db || !appId) {
+                console.warn("Firestore não inicializado. Não foi possível salvar o resultado.");
+                return;
+            }
+            
+            const resultsCollectionPath = `artifacts/${appId}/public/data/quiz_results`;
+
+            try {
+                const resultData = {
+                    name: userName,
+                    class: userClass,
+                    score: currentScore,
+                    time: totalTimeSeconds, // Armazena em segundos para desempate
+                    timestamp: new Date().toISOString()
+                };
+
+                await addDoc(collection(db, resultsCollectionPath), resultData);
+                console.log("Resultado salvo com sucesso!");
+
+            } catch (error) {
+                console.error("Erro ao salvar resultado no Firestore:", error);
+                alertUser("ERRO NO BANCO DE DADOS", "Não foi possível salvar seu resultado na classificação.");
+            }
+        }
+
+        async function loadRanking() {
+            if (!db || !appId) {
+                 alertUser("ERRO", "Classificação desabilitada (Firebase não configurado).");
+                 return [];
+            }
+            
+            const resultsCollectionPath = `artifacts/${appId}/public/data/quiz_results`;
+
+            try {
+                // Consulta: Busca todos os documentos na coleção (sem limit)
+                const q = query(
+                    collection(db, resultsCollectionPath)
+                    // Removendo a ordenação para evitar o erro de índice
+                );
+
+                const querySnapshot = await getDocs(q);
+                let ranking = [];
+
+                querySnapshot.forEach((doc) => {
+                    ranking.push(doc.data());
+                });
+
+                // CLASSIFICAÇÃO LOCAL NO JAVASCRIPT: Ordena por Score (DESC) e depois por Time (ASC)
+                ranking.sort((a, b) => {
+                    // 1. Ordena por Score (Maior primeiro)
+                    if (b.score !== a.score) {
+                        return b.score - a.score;
+                    }
+                    // 2. Desempate por Tempo (Menor primeiro)
+                    return a.time - b.time;
+                });
+                
+                // REMOVIDO O LIMITE DE 10 PARA MOSTRAR TODOS
+                // ranking = ranking.slice(0, 10); 
+
+                showRankingModal(ranking);
+                return ranking;
+
+            } catch (error) {
+                console.error("Erro ao carregar o ranking:", error);
+                alertUser("ERRO DE CLASSIFICAÇÃO", "Não foi possível carregar a classificação. Detalhe: " + error.message);
+                return [];
+            }
+        }
+
+        function showRankingModal(rankingData) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4';
+            
+            let tableContent = `
+                <table class="ranking-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nome (Turma)</th>
+                            <th>Pontos</th>
+                            <th>Tempo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            if (rankingData.length === 0) {
+                tableContent += `<tr><td colspan="4" class="text-center text-gray-900">Nenhum resultado ainda. Seja o primeiro!</td></tr>`;
+            } else {
+                rankingData.forEach((result, index) => {
+                    tableContent += `
+                        <tr class="${index < 3 ? 'bg-yellow-100 font-bold' : (index % 2 === 0 ? 'bg-gray-50' : 'bg-white') }">
+                            <td class="text-gray-900">${index + 1}</td>
+                            <td class="text-gray-900">${result.name} (${result.class})</td>
+                            <td class="text-gray-900">${result.score}</td>
+                            <td class="text-gray-900 font-mono">${formatTime(result.time)}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            tableContent += `</tbody></table>`;
+
+            modal.innerHTML = `
+                <div class="bg-white p-8 rounded-lg text-gray-900 max-w-xl w-full shadow-2xl">
+                    <h3 class="text-2xl font-bold mb-4 text-center">CLASSIFICAÇÃO GERAL - TODOS OS PARTICIPANTES</h3>
+                    ${tableContent}
+                    <p class="mt-4 text-sm text-gray-600 text-center">Mostrando todos os ${rankingData.length} resultados. Ordenado por Pontos (maior) e Tempo (menor).</p>
+                    <button id="close-ranking-modal" class="w-full mt-6 bg-blue-600 text-white p-2 rounded font-semibold hover:bg-blue-700">FECHAR</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.getElementById('close-ranking-modal').addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+        }
+        
+        // --- FIM DAS FUNÇÕES FIREBASE ---
+
+        // Função auxiliar para selecionar N perguntas aleatórias de um tópico
+        function selectRandomQuestions(topicName, count) {
+            const allQuestions = reviewQuestionSet[topicName];
+            if (!allQuestions || allQuestions.length < count) {
+                console.error(`Não há questões suficientes para o tópico ${topicName}`);
+                return [];
+            }
+            
+            // Cria uma cópia e embaralha (Fisher-Yates)
+            let shuffled = [...allQuestions];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            
+            // Retorna as primeiras 'count' questões
+            return shuffled.slice(0, count);
+        }
+
+        // FUNÇÃO CENTRAL: Inicia o ciclo de revisão
+        function startReviewAttempt(topic) {
+            weakestTopicName = topic;
+            quizMode = 'review';
+            reviewIndex = -1;
+            reviewCorrectCount = 0;
+            
+            // NOVO: Seleciona um novo subconjunto de 3 perguntas
+            reviewQuestions = selectRandomQuestions(weakestTopicName, 3);
+            
+            // Oculta/Mostra botões
+            reviewBtn.classList.add('hidden');
+            retryBtn.classList.add('hidden'); // Esconde o botão de tentar novamente
+            nextQuestionBtn.classList.remove('hidden');
+            restartBtn.classList.add('hidden'); 
+            
+            // Zera a sequência do quiz principal (se necessário)
+            consecutiveCorrect = 0;
+            updateScore();
+            
+            // Reinicia o uso de linhas de vida (habilitadas no modo revisão)
+            lifelineUsage = { ajudar: false, dica: false, exemplo: false };
+            
+            startProgressiveTimer(); // ADICIONADO: Garante que o cronômetro continue/recomece na revisão.
+            loadNextQuestion();
+        }
+
+        // --- Funções Principais do Quiz (Resto do código mantido) ---
+        
+        // Função unificada para exibir o pop-up de ajuda
+        function alertHelp(title, message) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white p-8 rounded-lg text-gray-900 max-w-sm w-full shadow-2xl">
+                    <h3 class="text-xl font-bold mb-4">${title}</h3>
+                    <p class="mb-6">${message}</p>
+                    <button id="close-modal" class="w-full bg-blue-600 text-white p-2 rounded font-semibold hover:bg-blue-700">FECHAR</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.getElementById('close-modal').addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+        }
+        
+        // Função para atualizar o placar
+        function updateScore() {
+            currentScoreEl.textContent = currentScore;
+            consecutiveCorrectEl.textContent = consecutiveCorrect;
+        }
+
+        // Função para atualizar o estado dos botões de ajuda
+        function updateLifelineButtons() {
+            // Se não estiver ativo (resposta dada), desabilita TUDO.
+            if (!quizActive) { 
+                ajudarBtn.disabled = true;
+                dicaBtn.disabled = true;
+                exemploBtn.disabled = true;
+                return;
+            }
+            
+            // NOVO: No modo revisão, as ajudas são SEMPRE ativas (se o quiz estiver ativo).
+            if (quizMode === 'review') {
+                ajudarBtn.disabled = false;
+                dicaBtn.disabled = false;
+                exemploBtn.disabled = false;
+                return;
+            }
+
+            // MODO PRINCIPAL (Main): Desabilita se já foi usado.
+            ajudarBtn.disabled = lifelineUsage.ajudar;
+            dicaBtn.disabled = lifelineUsage.dica;
+            exemploBtn.disabled = lifelineUsage.exemplo;
+        }
+
+        // Ação de tempo esgotado (MANUALMENTE REMOVIDA)
+        function handleTimeOut() {
+            // Esta função não é mais chamada ou necessária, pois o tempo foi removido.
+        }
+
+        // FUNÇÃO CENTRAL: Carrega a próxima pergunta, ou o relatório final
+        function loadNextQuestion() {
+            messageBoxEl.classList.add('hidden');
+            
+            // Resetar estados por pergunta
+            secondChanceActive = false; 
+
+            if (quizMode === 'main') {
+                currentQuestionIndex++;
+                if (currentQuestionIndex >= questions.length) {
+                    // FIM DO QUIZ PRINCIPAL: Mostrar relatório
+                    showFinalReport();
+                    return;
+                }
+                
+                const currentQ = questions[currentQuestionIndex];
+                // Numeração principal no formato "1 - "
+                document.getElementById('quiz-title').textContent = `Pergunta ${currentQuestionIndex + 1}:`;
+                questionTextEl.textContent = `${currentQuestionIndex + 1} - ${currentQ.question}`;
+                topicInfoEl.innerHTML = `Conteúdo: ${currentQ.topic}`;
+                
+            } else if (quizMode === 'review') {
+                reviewIndex++;
+                if (reviewIndex >= reviewQuestions.length) {
+                    // FIM DO MODO REVISÃO
+                    showReviewEnd();
+                    return;
+                }
+                
+                const currentQ = reviewQuestions[reviewIndex];
+                // Numeração de revisão sem '/'
+                document.getElementById('quiz-title').textContent = `REVISÃO ${reviewIndex + 1}:`;
+                questionTextEl.textContent = `${currentQ.question}`;
+                topicInfoEl.innerHTML = `REVISANDO: ${currentQ.topic}`;
+            }
+
+            // Lógica comum de carregamento
+            let currentSet = quizMode === 'main' ? questions : reviewQuestions;
+            let currentIndex = quizMode === 'main' ? currentQuestionIndex : reviewIndex;
+            const currentQ = currentSet[currentIndex];
+
+            quizActive = true;
+            quizBoxEl.classList.add('main-quiz-box');
+            quizBoxEl.classList.remove('bg-green-700', 'bg-red-700', 'bg-gray-800');
+            
+            nextQuestionBtn.disabled = true;
+            nextQuestionBtn.textContent = "RESPONDENDO...";
+
+            optionsContainerEl.innerHTML = '';
+            currentQ.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-button p-4 rounded-lg text-left font-semibold shadow-md';
+                button.textContent = String.fromCharCode(65 + index) + ") " + option; // A) B) C) D)
+                button.dataset.index = index;
+                button.addEventListener('click', handleAnswer);
+                optionsContainerEl.appendChild(button);
+            });
+
+            updateLifelineButtons();
+            // startTimer(); // REMOVIDO: Não inicia mais o timer
+        }
+
+        // Função para desabilitar as opções após uma resposta
+        function disableOptions(correctIndex, selectedIndex = -1) {
+            const options = optionsContainerEl.querySelectorAll('.option-button');
+            options.forEach((button, index) => {
+                button.disabled = true;
+                if (index === correctIndex) {
+                    button.classList.add('correct-answer');
+                    button.classList.remove('option-button');
+                } else if (index === selectedIndex) {
+                    button.classList.add('wrong-answer');
+                    button.classList.remove('option-button');
+                }
+            });
+        }
+
+        // Função de tratamento de resposta (MOSTRA A EXPLICAÇÃO CLARAMENTE COM NUMERAÇÃO)
+        function handleAnswer(event) {
+            if (!quizActive) return;
+
+            
+            const selectedButton = event.currentTarget;
+            const selectedIndex = parseInt(selectedButton.dataset.index);
+            
+            let currentSet = quizMode === 'main' ? questions : reviewQuestions;
+            let currentIndex = quizMode === 'main' ? currentQuestionIndex : reviewIndex;
+            const currentQ = currentSet[currentIndex];
+            const correctIndex = currentQ.answerIndex;
+            
+            // Tratamento da Segunda Chance (Convidados) - MANTIDO A LÓGICA CASO O BOTÃO SEJA REINTRODUZIDO
+            if (selectedIndex !== correctIndex && secondChanceActive) {
+                secondChanceActive = false; // Consome a chance
+                selectedButton.disabled = true;
+                selectedButton.classList.add('eliminated-option');
+                
+                alertHelp("CONVIDADOS", "Resposta incorreta! Você tem uma segunda chance. Escolha outra opção.");
+                return; // NÃO finaliza a questão, apenas desabilita a opção errada
+            }
+            
+            // Se chegou aqui, a questão está sendo FINALIZADA (acerto, erro sem 2ª chance, ou 2º erro)
+            
+            nextQuestionBtn.disabled = false;
+            updateLifelineButtons(); // Desabilita linhas de vida
+
+            quizActive = false;
+            
+            disableOptions(correctIndex, selectedIndex);
+            
+            let questionNumber = quizMode === 'main' ? currentIndex + 1 : currentIndex + 1; // Simplificado
+
+            if (selectedIndex === correctIndex) {
+                // Acerto
+                if (quizMode === 'main') {
+                    // CADA ACERTO VALE 1 PONTO
+                    currentScore += 1;
+                    consecutiveCorrect++;
+                    topicPerformance[currentQ.topic].total++;
+                    topicPerformance[currentQ.topic].correct++;
+                } else if (quizMode === 'review') { 
+                    reviewCorrectCount++;
+                }
+
+                quizBoxEl.classList.remove('main-quiz-box', 'bg-red-700');
+                quizBoxEl.classList.add('bg-green-700');
+                // Mensagem de acerto ajustada
+                questionTextEl.textContent = (quizMode === 'main' ? "CORRETO! Você ganhou 1 ponto!" : "CORRETO!");
+                
+                // Numeração no formato "1 - "
+                messageBoxEl.textContent = `${questionNumber} - ACERTO / EXPLICAÇÃO: ${currentQ.explanation}`;
+                messageBoxEl.classList.remove('hidden', 'bg-red-600');
+                messageBoxEl.classList.add('bg-green-600');
+            } else {
+                // Erro (Final)
+                if (quizMode === 'main') {
+                    consecutiveCorrect = 0;
+                    topicPerformance[currentQ.topic].total++;
+                    topicPerformance[currentQ.topic].wrong++;
+                }
+                
+                quizBoxEl.classList.remove('main-quiz-box', 'bg-green-700');
+                quizBoxEl.classList.add('bg-red-700');
+                questionTextEl.textContent = "ERRADO! A resposta correta era: " + currentQ.options[correctIndex];
+                
+                // Numeração no formato "1 - "
+                messageBoxEl.textContent = `${questionNumber} - ERRO / EXPLICAÇÃO: ${currentQ.explanation}`; 
+                messageBoxEl.classList.remove('hidden', 'bg-green-600');
+                messageBoxEl.classList.add('bg-red-600');
+            }
+            
+            updateScore();
+            
+            // Atualiza o texto do botão para o próximo passo (seja próxima pergunta ou resultado final)
+            if (quizMode === 'main' && currentQuestionIndex === questions.length - 1) {
+                nextQuestionBtn.textContent = "VER RESULTADO FINAL";
+            } else if (quizMode === 'review' && reviewIndex === reviewQuestions.length - 1) {
+                nextQuestionBtn.textContent = "FIM DA REVISÃO";
+            } else {
+                 nextQuestionBtn.textContent = "PRÓXIMA PERGUNTA";
+            }
+        }
+        
+        // Novo: Encontra o tópico com mais erros
+        function findWeakestTopic() {
+            let maxErrors = -1;
+            let weakestTopic = null;
+            let totalQuestionsAnswered = 0;
+
+            for (const topic in topicPerformance) {
+                totalQuestionsAnswered += topicPerformance[topic].total;
+                if (topicPerformance[topic].wrong > maxErrors) {
+                    maxErrors = topicPerformance[topic].wrong;
+                    weakestTopic = topic;
+                }
+            }
+            // Retorna o tópico fraco apenas se houver pelo menos 1 erro.
+            return maxErrors > 0 ? weakestTopic : null; 
+        }
+
+        // Novo: Exibe o relatório final do quiz principal
+        function showFinalReport() {
+            stopProgressiveTimer(); // PARAR O CRONÔMETRO
+            const weakestTopic = findWeakestTopic();
+            
+            optionsContainerEl.innerHTML = '';
+            nextQuestionBtn.classList.add('hidden');
+            retryBtn.classList.add('hidden'); // Oculta o botão de repetição
+
+            const finalTime = formatTime(totalTimeSeconds); // Obter tempo final
+
+            let reportMessage = `
+                <h2 class="text-2xl font-bold mb-4">RELATÓRIO FINAL</h2>
+                <!-- PONTUAÇÃO AJUSTADA AQUI -->
+                <p class="text-xl font-semibold mb-2">JOGADOR: <span class="text-yellow-300">${userName} (${userClass})</span></p>
+                <p class="text-xl font-semibold mb-2">PONTUAÇÃO TOTAL: <span class="text-yellow-300">${currentScore}</span> PONTO(S)</p>
+                <p class="text-lg font-semibold mt-4">TEMPO GASTO TOTAL: <span class="text-yellow-300 font-mono">${finalTime}</span></p>
+            `;
+
+            if (weakestTopic) {
+                quizCompletedSuccessfully = false; // Teve erros, não completou com sucesso
+                weakestTopicName = weakestTopic; // Salva o tópico fraco para a função de repetição
+                
+                const errors = topicPerformance[weakestTopic].wrong;
+                
+                reportMessage += `
+                    <div class="mt-4 p-4 rounded-lg bg-red-700">
+                        <h3 class="text-lg font-bold">🎯 FOCO NA REVISÃO</h3>
+                        <p class="mt-2 text-xl font-mono">${weakestTopic}</p>
+                        <p class="mt-1 text-sm">VOCÊ COMETEU ${errors} ERRO${errors > 1 ? 'S' : ''} NESTE TEMA.</p>
+                    </div>
+                    <p class="mt-4 text-base">É OBRIGATÓRIO CONCLUIR A REVISÃO PARA JOGAR NOVAMENTE.</p>
+                `;
+                reviewBtn.textContent = `INICIAR REVISÃO: ${weakestTopic.split('(')[0].trim()}`;
+                reviewBtn.classList.remove('hidden'); // Mostra o botão de revisão
+
+                // NOVO: Botão REINICIAR (SAIR E REINICIAR) DESABILITADO
+                restartBtn.textContent = 'SAIR E REINICIAR';
+                restartBtn.disabled = true;
+                restartBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                restartBtn.classList.remove('hidden');
+
+            } else {
+                // SUCESSO NO QUIZ PRINCIPAL
+                quizCompletedSuccessfully = true; 
+                saveResultToFirestore(); // SALVA O RESULTADO
+                reportMessage += `
+                    <div class="mt-4 p-4 rounded-lg bg-green-700">
+                        <h3 class="text-lg font-bold">🌟 PARABÉNS!</h3>
+                        <p class="mt-2">VOCÊ ACERTOU TODAS AS QUESTÕES. JOGUE NOVAMENTE PARA CONSOLIDAR SEU CONHECIMENTO!</p>
+                    </div>
+                `;
+                reviewBtn.classList.add('hidden'); // Oculta o botão se não houver erro claro
+
+                // ALTERADO: Botão FINAL AGORA É "SAIR DO JOGO"
+                restartBtn.textContent = 'SAIR DO JOGO';
+                restartBtn.disabled = false;
+                restartBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'hidden');
+            }
+
+            quizBoxEl.classList.remove('main-quiz-box', 'bg-green-700', 'bg-red-700');
+            quizBoxEl.classList.add('bg-gray-800');
+            questionTextEl.innerHTML = reportMessage;
+            topicInfoEl.textContent = "ANÁLISE CONCLUÍDA.";
+            updateLifelineButtons(); // Desabilita linhas de vida no relatório
+            quizActive = false;
+        }
+        
+        // Exibe o fim do modo revisão, mostrando a quantidade de acertos
+        function showReviewEnd() {
+            quizBoxEl.classList.remove('bg-green-700', 'bg-red-700');
+            optionsContainerEl.innerHTML = '';
+            nextQuestionBtn.classList.add('hidden');
+            reviewBtn.classList.add('hidden');
+            
+            const totalReview = reviewQuestions.length;
+            const finalTime = formatTime(totalTimeSeconds); // Obter tempo final
+            let timeDisplay = `<p class="text-lg font-semibold mt-4">TEMPO TOTAL DA ATIVIDADE: <span class="text-yellow-300 font-mono">${finalTime}</span></p>`;
+
+
+            if (reviewCorrectCount === totalReview) {
+                stopProgressiveTimer(); // PARAR CRONÔMETRO APENAS NO SUCESSO
+                saveResultToFirestore(); // SALVA O RESULTADO APÓS REVISÃO COMPLETA
+                // SUCESSO! Acertou todas as 3
+                quizBoxEl.classList.add('bg-green-700');
+                 questionTextEl.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-4">REVISÃO CONCLUÍDA COM SUCESSO!</h2>
+                    <p class="text-xl font-semibold mb-2">ACERTOS: <span class="text-yellow-300">${reviewCorrectCount} / ${totalReview}</span></p>
+                    <p class="mt-4">VOCÊ DOMINOU O TÓPICO ${weakestTopicName.split('(')[0].trim()}. AGORA PODE REINICIAR O QUIZ.</p>
+                    ${timeDisplay}
+                `;
+                // ALTERADO: Botão FINAL AGORA É "SAIR DO JOGO"
+                restartBtn.textContent = 'SAIR DO JOGO';
+                restartBtn.disabled = false;
+                restartBtn.classList.remove('hidden', 'opacity-50', 'cursor-not-allowed');
+                retryBtn.classList.add('hidden');
+            } else {
+                // FALHA! Precisa tentar novamente (O cronômetro continua rodando)
+                quizBoxEl.classList.add('bg-red-700');
+                 questionTextEl.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-4">REVISÃO INCOMPLETA!</h2>
+                    <p class="text-xl font-semibold mb-2">ACERTOS: <span class="text-yellow-300">${reviewCorrectCount} / ${totalReview}</span></p>
+                    <p class="mt-4">PARA CONCLUIR O CICLO, VOCÊ PRECISA DE ${totalReview}/${totalReview} ACERTOS. TENTE NOVAMENTE COM NOVAS PERGUNTAS!</p>
+                `;
+                retryBtn.classList.remove('hidden'); // MOSTRA O BOTÃO TENTAR NOVAMENTE
+                restartBtn.classList.add('hidden'); 
+            }
+            
+            topicInfoEl.textContent = "FIM DA REVISÃO";
+            updateLifelineButtons(); // Desabilita linhas de vida
+            quizActive = false;
+        }
+        
+        // NOVO: Função para iniciar o jogo (sai da tela inicial)
+        function startGame() {
+            // Captura e validação dos dados
+            userName = userNameInputEl.value.trim();
+            userClass = userClassInputEl.value.trim();
+
+            if (!userName || !userClass) {
+                startErrorEl.classList.remove('hidden');
+                return; 
+            }
+            startErrorEl.classList.add('hidden');
+
+            startScreenEl.classList.add('hidden');
+            mainQuizContainerEl.classList.remove('hidden');
+            nextQuestionBtn.classList.remove('hidden');
+            
+            startProgressiveTimer(); // INICIA O CRONÔMETRO
+            
+            loadNextQuestion(); // Inicia o quiz com a primeira pergunta
+        }
+
+        // NOVO: Função central que realiza o reset de estado e DOM.
+        function forceFullReset(skipStartScreen = false) { 
+            // Zera todas as variáveis de estado
+            currentQuestionIndex = -1; 
+            currentScore = 0;
+            consecutiveCorrect = 0;
+            quizMode = 'main';
+            reviewIndex = -1;
+            reviewCorrectCount = 0;
+            weakestTopicName = '';
+            quizCompletedSuccessfully = false; 
+            
+            // ZERA O TEMPO E O CRONÔMETRO
+            stopProgressiveTimer();
+            totalTimeSeconds = 0;
+            if (progressiveTimerDisplayEl) {
+                progressiveTimerDisplayEl.textContent = formatTime(totalTimeSeconds);
+            }
+
+            // ZERA O USO DOS RECURSOS
+            lifelineUsage = { ajudar: false, dica: false, exemplo: false };
+            secondChanceActive = false; 
+
+            // Zera o desempenho dos tópicos
+            for (const topic in topicPerformance) {
+                 topicPerformance[topic] = { total: 0, correct: 0, wrong: 0 };
+            }
+
+            // Oculta botões de fim de jogo e limpa DOM
+            reviewBtn.classList.add('hidden');
+            restartBtn.classList.add('hidden');
+            retryBtn.classList.add('hidden');
+            nextQuestionBtn.classList.add('hidden');
+            optionsContainerEl.innerHTML = ''; 
+            messageBoxEl.classList.add('hidden'); 
+            
+            // Resetar a aparência da caixa de pergunta
+            quizBoxEl.classList.remove('bg-green-700', 'bg-red-700', 'bg-gray-800');
+            quizBoxEl.classList.add('main-quiz-box');
+            document.getElementById('quiz-title').textContent = 'Pergunta';
+            questionTextEl.textContent = 'Aguardando Carregamento...';
+            topicInfoEl.textContent = 'Conteúdo: ';
+
+            // Limpa os campos de input do usuário
+            if (userNameInputEl) userNameInputEl.value = '';
+            if (userClassInputEl) userClassInputEl.value = '';
+            
+            // Retorna à tela inicial ou inicia o jogo
+            if (skipStartScreen) {
+                startGame(); // Vai direto para a Pergunta 1
+            } else {
+                initializeQuiz(); // Volta para a tela de AÇÃO
+            }
+        }
+        
+        // Função de Reiniciar (chamada pelo botão)
+        function restartQuiz() {
+            // Verifica se o botão REINICIAR está habilitado (caso contrário, ignora o clique)
+            if (restartBtn.disabled) return;
+            
+            // Chama a função central de reset (volta para a tela inicial)
+            forceFullReset();
+        }
+
+        // --- NOVO: Funções de Controle de Saída e Senha ---
+
+        function exitReviewMode() {
+            // FIX: Garante que forceFullReset volte para a Tela Inicial (Start Screen)
+            forceFullReset(); 
+        }
+
+        function showPasswordModal() {
+            stopProgressiveTimer(); // PAUSA O CRONÔMETRO AO ABRIR O MODAL
+
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white p-8 rounded-lg text-gray-900 max-w-sm w-full shadow-2xl text-center">
+                    <h3 class="text-xl font-bold mb-4">CONFIRMAÇÃO DE SAÍDA</h3>
+                    <p class="mb-4">Para sair do modo Revisão, digite a senha de 4 dígitos:</p>
+                    <input type="password" id="password-input" maxlength="4" class="w-full p-2 border border-gray-400 rounded mb-4 text-center text-lg tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-red-600">
+                    <p id="password-error" class="text-red-600 mb-4 hidden">Senha incorreta. Tente novamente.</p>
+                    <div class="flex justify-between gap-2">
+                        <button id="confirm-password" class="w-1/2 bg-red-600 text-white p-2 rounded font-semibold hover:bg-red-700">CONFIRMAR</button>
+                        <button id="cancel-password" class="w-1/2 bg-gray-400 text-gray-800 p-2 rounded font-semibold hover:bg-gray-500">CANCELAR</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            const passwordInput = document.getElementById('password-input');
+            const errorEl = document.getElementById('password-error');
+
+            document.getElementById('cancel-password').addEventListener('click', () => {
+                document.body.removeChild(modal);
+                // Retoma à revisão e retoma o cronômetro
+                if (quizMode === 'review') { 
+                    startProgressiveTimer(); 
+                }
+            });
+
+            document.getElementById('confirm-password').addEventListener('click', () => {
+                const inputPassword = passwordInput.value;
+
+                if (inputPassword === REVIEW_EXIT_PASSWORD) {
+                    document.body.removeChild(modal);
+                    exitReviewMode(); // CHAMA o RESET COMPLETO E VOLTA PARA A TELA INICIAL
+                } else {
+                    errorEl.classList.remove('hidden');
+                    passwordInput.value = ''; // Limpa o input em caso de falha
+                    passwordInput.focus();
+                }
+            });
+
+            // Permite submissão com a tecla Enter
+            passwordInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    document.getElementById('confirm-password').click();
+                }
+            });
+
+            passwordInput.focus();
+        }
+
+        function handleParar() {
+            stopProgressiveTimer(); // PAUSA O CRONÔMETRO
+            const currentTime = formatTime(totalTimeSeconds);
+
+            if (quizMode === 'review') {
+                // Se estiver em revisão, exige a senha para sair
+                showPasswordModal();
+            } else {
+                // Modo principal: pausa simples. Ao fechar o modal, o timer deve ser retomado.
+                const modalTitle = "JOGO PARADO";
+                const modalMessage = `VOCÊ PAROU. Tempo decorrido: ${currentTime}. CLIQUE EM PRÓXIMA PERGUNTA PARA CONTINUAR.`;
+                
+                // Usa a função auxiliar de modal
+                alertHelp(modalTitle, modalMessage);
+            }
+        }
+        // --- FIM das Funções de Controle de Saída e Senha ---
+
+        // NOVO: Função para atribuir as referências DOM
+        function setupDOMReferences() {
+             startScreenEl = document.getElementById('start-screen');
+             mainQuizContainerEl = document.getElementById('main-quiz-container');
+             startActionBtn = document.getElementById('start-action-btn');
+
+             // Novos Inputs
+             userNameInputEl = document.getElementById('user-name-input');
+             userClassInputEl = document.getElementById('user-class-input');
+             startErrorEl = document.getElementById('start-error-message');
+
+             questionTextEl = document.getElementById('question-text');
+             topicInfoEl = document.getElementById('topic-info');
+             optionsContainerEl = document.getElementById('options-container');
+             nextQuestionBtn = document.getElementById('next-question-btn');
+             reviewBtn = document.getElementById('review-btn'); 
+             restartBtn = document.getElementById('restart-btn'); 
+             retryBtn = document.getElementById('retry-btn'); 
+
+             ajudarBtn = document.getElementById('ajudar-btn'); 
+             dicaBtn = document.getElementById('dica-btn'); 
+             exemploBtn = document.getElementById('exemplo-btn'); 
+             rankingBtn = document.getElementById('ranking-btn');
+            
+             // ATUALIZADO: Usando o novo ID para o display do tempo progressivo
+             progressiveTimerDisplayEl = document.getElementById('progressive-timer-display');
+             currentScoreEl = document.getElementById('current-score');
+             consecutiveCorrectEl = document.getElementById('consecutive-correct');
+             quizBoxEl = document.getElementById('quiz-box');
+             messageBoxEl = document.getElementById('message-box');
+        }
+
+        // --- FUNÇÕES HANDLERS MOVIDAS PARA GARANTIR DEFINIÇÃO SEQUENCIAL ---
+
+        // NOVO HANDLER: Ajuda Completa (Como fazer)
+        function handleAjudar() {
+            // A verificação de uso só ocorre no quiz principal
+            if (!quizActive || (quizMode === 'main' && lifelineUsage.ajudar)) return;
+            
+            let currentSet = quizMode === 'main' ? questions : reviewQuestions;
+            let currentIndex = quizMode === 'main' ? currentQuestionIndex : reviewIndex;
+            const currentQ = currentSet[currentIndex];
+            
+            if (currentQ && currentQ.ajudar_completa) {
+                alertHelp("AJUDAR (COMO FAZER)", currentQ.ajudar_completa);
+                
+                // Marca como usado SOMENTE se estiver no modo principal
+                if (quizMode === 'main') {
+                    lifelineUsage.ajudar = true;
+                }
+                updateLifelineButtons();
+            }
+        }
+        
+        // NOVO HANDLER: Dica Simples
+        function handleDica() {
+            // A verificação de uso só ocorre no quiz principal
+            if (!quizActive || (quizMode === 'main' && lifelineUsage.dica)) return;
+            
+            let currentSet = quizMode === 'main' ? questions : reviewQuestions;
+            let currentIndex = quizMode === 'main' ? currentQuestionIndex : reviewIndex;
+            const currentQ = currentSet[currentIndex];
+            
+            if (currentQ && currentQ.dica_simples) {
+                alertHelp("DICA", currentQ.dica_simples);
+                
+                // Marca como usado SOMENTE se estiver no modo principal
+                if (quizMode === 'main') {
+                    lifelineUsage.dica = true;
+                }
+                updateLifelineButtons();
+            }
+        }
+
+        // NOVO HANDLER: Exemplo Similar
+        function handleExemplo() {
+            // A verificação de uso só ocorre no quiz principal
+            if (!quizActive || (quizMode === 'main' && lifelineUsage.exemplo)) return;
+            
+            let currentSet = quizMode === 'main' ? questions : reviewQuestions;
+            let currentIndex = quizMode === 'main' ? currentQuestionIndex : reviewIndex;
+            const currentQ = currentSet[currentIndex];
+            
+            if (currentQ && currentQ.exemplo_similar) {
+                alertHelp("EXEMPLO SIMILAR", currentQ.exemplo_similar);
+                
+                // Marca como usado SOMENTE se estiver no modo principal
+                if (quizMode === 'main') {
+                    lifelineUsage.exemplo = true;
+                }
+                updateLifelineButtons();
+            }
+        }
+        
+        // Função de alerta (substituindo o alert() padrão)
+        function alertUser(title, message) {
+            alertHelp(title, message);
+        }
+        
+        // Inicialização
+        function initializeQuiz() {
+             setupDOMReferences(); // NOVO: Inicializa as referências DOM aqui
+             setupFirebase(); // NOVO: Inicializa o Firebase
+             
+             // Estado inicial: Main quiz container hidden, start screen shown
+            mainQuizContainerEl.classList.add('hidden');
+            startScreenEl.classList.remove('hidden');
+
+            updateScore();
+            progressiveTimerDisplayEl.textContent = formatTime(0); // Zera e exibe o cronômetro
+            updateLifelineButtons(); // Desabilita botões no início
+            
+            // ATRIBUIÇÃO DE LISTENERS (Movidos para dentro da initializeQuiz)
+            startActionBtn.addEventListener('click', startGame);
+
+            nextQuestionBtn.addEventListener('click', () => {
+                 if (!nextQuestionBtn.disabled) {
+                    // Retoma o cronômetro se estiver pausado
+                    if (!quizActive) {
+                        startProgressiveTimer();
+                    }
+                    loadNextQuestion();
+                }
+            });
+            
+            // NOVO: Chama a função handleParar()
+            document.getElementById('parar-btn').addEventListener('click', handleParar);
+            rankingBtn.addEventListener('click', loadRanking); // NOVO: Listener para o ranking
+
+            restartBtn.addEventListener('click', restartQuiz);
+            retryBtn.addEventListener('click', () => startReviewAttempt(weakestTopicName));
+            
+            ajudarBtn.addEventListener('click', handleAjudar);
+            dicaBtn.addEventListener('click', handleDica);
+            exemploBtn.addEventListener('click', handleExemplo);
+
+            reviewBtn.addEventListener('click', () => startReviewAttempt(weakestTopicName));
+        }
+
+        initializeQuiz();
+    </script>
+</body>
+</html>
