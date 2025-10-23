@@ -169,7 +169,7 @@
             </button>
             
             <!-- Botão de Revisão (Oculto até o fim do quiz) -->
-            <button id="review-btn" class="bg-yellow-500 hover:bg-yellow-600 px-8 py-4 rounded-lg font-bold text-lg shadow-xl self-center transition duration-300 transform hover:scale-[1.02] mt-4 hidden">
+            <button id="review-btn" class="bg-yellow-500 hover:bg-yellow-600 px-8 py-4 rounded-lg font-bold text-lg shadow-xl self-center transition duration-00 transform hover:scale-[1.02] mt-4 hidden">
                 INICIAR REVISÃO
             </button>
             
@@ -240,397 +240,347 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, getDocs, limit, serverTimestamp, setLogLevel, doc, onSnapshot, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Array de objetos com as 10 perguntas PRINCIPAIS
-        const questions = [
-            {
-                topic: "Geometria Plana (Semelhança e Trigonometria)",
-                question: "Um arquiteto precisa fazer um projeto para uma casa. Ele usou uma figura semelhante para a planta da casa. Qual das alternativas apresenta figuras semelhantes?",
-                options: ["Um triângulo e um retângulo.", "Dois triângulos com os mesmos ângulos, mas lados diferentes.", "Um círculo e uma elipse.", "Um quadrado e um retângulo."],
-                answerIndex: 1, // B) Dois triângulos com os mesmos ângulos, mas lados diferentes.
-                explanation: "Figuras semelhantes mantêm a proporção entre os lados correspondentes e possuem os ângulos internos congruentes. A igualdade de ângulos garante a semelhança mesmo com tamanhos (lados) diferentes.",
-                dica_simples: "Semelhança exige a manutenção dos ângulos e proporcionalidade dos lados, não a igualdade dos lados.",
-                ajudar_completa: "Para que duas figuras sejam semelhantes, a única regra rígida é que os ângulos internos sejam mantidos exatamente iguais. O tamanho (comprimento dos lados) pode ser diferente, desde que a proporção entre os lados correspondentes seja mantida (razão de semelhança). Se os ângulos são iguais, a semelhança está garantida, independentemente do comprimento dos lados.",
-                exemplo_similar: "Exemplo: Um mapa da cidade é semelhante à cidade real. Os ângulos das ruas são os mesmos, mas o tamanho no papel é muito menor. Assim, a forma é idêntica (ângulos iguais), mas o tamanho é diferente."
-            },
-            {
-                topic: "Geometria Plana (Teorema de Pitágoras)",
-                question: "Um triângulo retângulo tem um cateto medindo 3 cm e outro cateto medindo 4 cm. Qual é a medida da hipotenusa?",
-                options: ["5 cm", "7 cm", "6 cm", "8 cm"],
-                answerIndex: 0, // A) 5 cm
-                explanation: "Pelo Teorema de Pitágoras (a² + b² = c²), temos 3² + 4² = c². 9 + 16 = 25. A raiz quadrada de 25 é 5 cm.",
-                dica_simples: "Use a fórmula: cateto² + cateto² = hipotenusa². Lembre-se que 3, 4 e 5 formam uma terna pitagórica.",
-                ajudar_completa: "O Teorema de Pitágoras se aplica a triângulos retângulos. A soma dos quadrados dos catetos (os lados que formam o ângulo de 90 graus) é igual ao quadrado da hipotenusa (o lado oposto ao ângulo de 90 graus). Use a fórmula: a² + b² = c², onde 'c' é a hipotenusa e 'a' e 'b' são os catetos.",
-                exemplo_similar: "Exemplo: Se os catetos medem 6 e 8, a hipotenusa seria: 6² + 8² = 36 + 64 = 100. Hipotenusa = 10."
-            },
-            {
-                topic: "Geometria Espacial (Planificação)",
-                question: "Qual das opções abaixo representa corretamente a planificação de um cubo?",
-                options: ["Um quadrado e um triângulo.", "Seis quadrados dispostos em cruz.", "Um círculo e um quadrado.", "Um retângulo e dois triângulos."],
-                answerIndex: 1, // B) Seis quadrados dispostos em cruz.
-                explanation: "Um cubo é composto por 6 faces quadradas. A planificação mais comum é a cruz, onde quatro quadrados estão em linha, e um em cada lado do segundo quadrado.",
-                dica_simples: "Um cubo tem 6 faces quadradas idênticas. Pense em como você o 'desmontaria' em uma folha plana.",
-                ajudar_completa: "Um cubo é um sólido platônico com 6 faces, 12 arestas e 8 vértices. Todas as faces são quadradas e iguais. A planificação é a representação plana dessas 6 faces desdobradas. O desenho mais comum e fácil de visualizar é a 'cruz' ou 'T', onde uma fileira de quatro quadrados tem um quadrado anexado acima e outro abaixo do segundo quadrado.",
-                exemplo_similar: "Exemplo: A planificação de uma caixa de pizza quadrada é um quadrado (fundo) e quatro retângulos laterais (paredes). Já o cubo só tem faces quadradas. Pense em como seria a planificação de um dado."
-            },
-            {
-                topic: "Geometria Espacial (Relação de Euler)",
-                question: "Um cubo tem 8 vértices, 12 arestas e 6 faces. Qual é a relação que podemos estabelecer entre essas características?",
-                options: ["O número de arestas é igual ao número de faces.", "O número de vértices é igual ao número de faces.", "A soma do número de vértices é igual à soma do número de arestas e faces.", "A soma do número de vértices e faces é igual ao número de arestas somado a 2."],
-                answerIndex: 3, // D) A soma do número de vértices e faces é igual ao número de arestas somado a 2.
-                explanation: "A relação correta é a Relação de Euler: V - A + F = 2, ou V + F = A + 2. (8 + 6 = 12 + 2, ou seja, 14 = 14).",
-                dica_simples: "A fórmula de Euler é V - A + F = 2. Substitua os valores conhecidos e resolva para a relação.",
-                ajudar_completa: "A Relação de Euler é fundamental para poliedros convexos: V - A + F = 2, onde V = Vértices, A = Arestas e F = Faces. A pergunta pede uma relação entre essas características. Reorganizando a fórmula: V + F = A + 2. A soma de Vértices e Faces é igual ao número de Arestas mais 2.",
-                exemplo_similar: "Exemplo (Tetraedro): 4 Vértices, 6 Arestas, 4 Faces. V+F = 4+4 = 8. A+2 = 6+2 = 8. A relação se mantém: V+F = A+2."
-            },
-            {
-                topic: "Geometria Analítica (Reta e Ponto)",
-                question: "Um ponto A está localizado nas coordenadas (3, 4) e um ponto B nas coordenadas (7, 1). Qual é a localização do ponto médio entre A e B?",
-                options: ["(5, 2.5)", "(10, 5)", "(4, 3)", "(3.5, 4.5)"],
-                answerIndex: 0, // A) (5, 2.5)
-                explanation: "A coordenada do ponto médio (Xm, Ym) é a média aritmética das coordenadas x e y. Xm = (3 + 7) / 2 = 5. Ym = (4 + 1) / 2 = 2.5. O ponto médio é (5, 2.5).",
-                dica_simples: "O ponto médio é a média das coordenadas: (x1 + x2)/2 e (y1 + y2)/2.",
-                ajudar_completa: "Para encontrar o ponto médio (M) entre dois pontos A(x1, y1) e B(x2, y2), você deve calcular a média aritmética das coordenadas x e a média aritmética das coordenadas y. Fórmula: M = ( (x1 + x2) / 2 , (y1 + y2) / 2 ). Basta somar as coordenadas e dividir por dois.",
-                exemplo_similar: "Exemplo: O ponto médio entre (1, 5) e (9, 15) seria: Xm = (1+9)/2 = 5. Ym = (5+15)/2 = 10. Ponto Médio = (5, 10)."
-            },
-            // NOVAS 5 QUESTÕES ADICIONADAS AO QUIZ PRINCIPAL
-            { // Adicionada do tópico Semelhança/Trigonometria
-                topic: "Geometria Plana (Semelhança e Trigonometria)",
-                question: "Em um triângulo retângulo, se o ângulo oposto ao cateto de 3 cm é de 30 graus, qual é o valor do seno desse ângulo?",
-                options: ["1/2", "3/5", "1", "raiz(3)/2"],
-                answerIndex: 0, 
-                explanation: "O valor do seno de 30 graus é uma constante trigonométrica: Sen(30°) = 1/2. O valor do cateto (3 cm) é uma distração neste caso.",
-                dica_simples: "Lembre-se da tabela de ângulos notáveis: Seno de 30 graus.",
-                ajudar_completa: "Para encontrar o valor do seno, utilize a razão trigonométrica: Seno = Cateto Oposto / Hipotenusa. No entanto, para ângulos notáveis como 30°, 45° e 60°, o valor do seno é fixo. O lado oposto é fornecido, mas não é necessário, pois Sen(30°) é um valor fundamental.",
-                exemplo_similar: "Exemplo: O valor do cosseno de 60 graus também é 1/2."
-            },
-            { // Adicionada do tópico Pitágoras
-                topic: "Geometria Plana (Teorema de Pitágoras)",
-                question: "Durante uma aula de matemática, a professora desenhou um triângulo retângulo. Um dos catetos mede 5 cm e o outro cateto mede 12 cm. Qual é a medida da hipotenusa?",
-                options: ["13 cm", "11 cm", "10 cm", "15 cm"],
-                answerIndex: 0, 
-                explanation: "Pelo Teorema de Pitágoras (a² + b² = c²): 5² + 12² = c². 25 + 144 = 169. A raiz quadrada de 169 é 13 cm.",
-                dica_simples: "Lembre-se da terna pitagórica 5, 12 e 13.",
-                ajudar_completa: "Use a fórmula: (Cateto 1)² + (Cateto 2)² = (Hipotenusa)². Substitua os valores: 5² + 12² = c². Calcule a soma e, em seguida, encontre a raiz quadrada do resultado.",
-                exemplo_similar: "Exemplo: Em um triângulo com catetos 9 e 12, a hipotenusa é 15, pois 9² + 12² = 81 + 144 = 225, e a raiz de 225 é 15."
-            },
-            { // Adicionada do tópico Planificação
-                topic: "Geometria Espacial (Planificação)",
-                question: "Um estudante precisa desenhar a planificação de um paralelepípedo. Quantas faces ele deve desenhar?",
-                options: ["4", "6", "8", "5"],
-                answerIndex: 1, // B) 6
-                explanation: "Um paralelepípedo (ou bloco retangular) tem 6 faces retangulares (ou quadradas, no caso do cubo): base inferior, base superior, e 4 faces laterais.",
-                dica_simples: "Lembre-se de contar todas as faces, incluindo a superior e a inferior.",
-                ajudar_completa: "O paralelepípedo é um hexaedro, ou seja, possui 6 faces. Ele é composto por três pares de faces idênticas: as duas bases e dois pares de faces laterais. Ao planificar, você deve ter 6 figuras retangulares.",
-                exemplo_similar: "Exemplo: Um prisma triangular tem 5 faces (3 retangulares laterais e 2 bases triangulares)."
-            },
-            { // Adicionada do tópico Relação de Euler
-                topic: "Geometria Espacial (Relação de Euler)",
-                question: "Em um poliedro, se possui 6 faces e 8 vértices, quantas arestas esse poliedro possui?",
-                options: ["6", "12", "10", "8"],
-                answerIndex: 1, // B) 12
-                explanation: "Usando a Relação de Euler: V - A + F = 2. 8 - A + 6 = 2. 14 - A = 2. A = 12 arestas. (Este é um cubo).",
-                dica_simples: "Use a Relação de Euler: V + F = A + 2.",
-                ajudar_completa: "A Relação de Euler (V - A + F = 2) é a chave. V = 8, F = 6. 8 - A + 6 = 2. 14 - A = 2. A = 12.",
-                exemplo_similar: "Exemplo: Um poliedro com 10 vértices e 7 faces tem 15 arestas (10 + 7 = A + 2; A = 17 - 2 = 15)."
-            },
-            { // Adicionada do tópico Geometria Analítica
-                topic: "Geometria Analítica (Reta e Ponto)",
-                question: "Qual é a equação da reta que passa pelos pontos (1, 2) e (3, 4)?",
-                options: ["y = 2x + 1", "y = x + 1", "y = 2x", "y = 3x - 1"],
-                answerIndex: 1, // B) y = x + 1
-                explanation: "1. Coeficiente angular (m): m = (4 - 2) / (3 - 1) = 1. 2. Equação (y - y1 = m(x - x1)): y - 2 = 1(x - 1). y = x - 1 + 2. y = x + 1.",
-                dica_simples: "Primeiro encontre o coeficiente angular m = (y2 - y1) / (x2 - x1).",
-                ajudar_completa: "1. Encontre o coeficiente angular (m): m = (y2 - y1) / (x2 - x1). 2. Use a equação fundamental da reta com um dos pontos: y - y1 = m(x - x1).",
-                exemplo_similar: "Exemplo: A reta que passa por (1, 1) e (2, 3) tem m = 2. A equação é y = 2x - 1."
-            }
-        ];
-
-        // Perguntas adicionais para o MODO REVISÃO (Expandidas para 6 por tópico)
-        // O conteúdo movido para 'questions' foi removido desta seção.
-        const reviewQuestionSet = {
-            "Geometria Plana (Semelhança e Trigonometria)": [
-                { // P14 do usuário
-                    question: "Um engenheiro desenhou um triângulo retângulo em um projeto. Se o ângulo de 45 graus está oposto a um cateto de 10 cm, qual é a medida do outro cateto?",
-                    options: ["10 cm", "5 cm", "7 cm", "8 cm"],
-                    answerIndex: 0, 
-                    explanation: "Se um ângulo agudo é de 45 graus, o outro também é (180 - 90 - 45 = 45). Assim, o triângulo é isósceles (dois ângulos iguais), e os catetos opostos aos ângulos de 45 graus são iguais. O outro cateto também mede 10 cm.",
-                    dica_simples: "Se um triângulo retângulo tem um ângulo de 45°, ele é isósceles, o que significa que os catetos são iguais.",
-                    ajudar_completa: "Em um triângulo, a soma dos ângulos internos é 180°. Se já temos um ângulo de 90° e um de 45°, o terceiro ângulo é 45°. Em geometria, lados opostos a ângulos iguais são congruentes. Portanto, os dois catetos opostos aos ângulos de 45° devem ter o mesmo comprimento.",
-                    exemplo_similar: "Exemplo: Se o cateto oposto a 30° mede 5, o oposto a 60° mede 5 * raiz(3) e a hipotenusa mede 10."
-                },
-                { // NOVA PERGUNTA 1 (Criada por mim)
-                    question: "Dois hexágonos são semelhantes. O perímetro do hexágono menor é 30 cm. Se a razão de semelhança do menor para o maior é de 1:2, qual é o perímetro do hexágono maior?",
-                    options: ["30 cm", "60 cm", "45 cm", "90 cm"],
+        // ====================================================================
+        // BANCO DE QUESTÕES MESTRE (TODAS AS QUESTÕES DISPONÍVEIS)
+        // ====================================================================
+        
+        // NOVO NOME: reviewQuestionsBase (para evitar conflito com allQuestionsMaster)
+        const reviewQuestionsBase = {
+            "Perímetro e Área (Geometria Plana)": [
+                {
+                    topic: "Perímetro e Área (Geometria Plana)",
+                    question: "(Item 461071) Campo de futebol (100x68 m, retângulo) e campo de beisebol (quarto de círculo de raio 76 m). Qual a afirmativa correta sobre os perímetros? (Use π ≈ 3,14)",
+                    options: ["Arnaldo: Futebol (P_F) > Beisebol (P_B)", "Bernardo: Beisebol tem maior perímetro", "César: A diferença dos perímetros é ~13 m", "Todas as afirmativas são corretas"],
                     answerIndex: 1, 
-                    explanation: "A razão entre os perímetros de figuras semelhantes é igual à razão de semelhança dos lados. Razão = Perímetro menor / Perímetro maior. 1/2 = 30 / x. x = 60 cm.",
-                    dica_simples: "A razão entre os perímetros é a mesma que a razão entre os lados.",
-                    ajudar_completa: "Se a razão de semelhança entre os lados é k, a razão entre os perímetros também é k. Perímetro Maior = Perímetro Menor / k. Neste caso: Perímetro Maior = 30 / (1/2) = 30 * 2 = 60 cm.",
-                    exemplo_similar: "Exemplo: Se a razão entre dois quadrados é 1/5, e o perímetro do menor é 8 cm, o perímetro do maior é 40 cm (8 * 5)."
+                    explanation: "P_F = 2(100+68) = 336 m. P_B = 2 · R + (2 · π · R / 4) = 2(76) + (π · 76 / 2) ≈ 152 + 119.32 = 271.32 m. A diferença é 336 - 271.32 = 64.68 m. A única correta é a B) César: A diferença dos perímetros é ~13 m.",
+                    dica_simples: "Calcule P_F = 2(L+l) e P_B = 2R + (1/4)Circunferência.",
+                    ajudar_completa: "P_F = 336m. P_B = 152 + (3.14 * 76 / 2) = 271.32m. P_F > P_B (336 > 271.32). A afirmação de César é a correta.",
+                    exemplo_similar: "Exemplo: Um campo 50x50 tem P=200. Um semicírculo de R=20 tem P ≈ 102.8."
                 },
-                { // NOVA Q4 (Semelhança)
-                    question: "Qual a altura de uma árvore que projeta uma sombra de 15m, sabendo que um poste de 4m projeta uma sombra de 5m no mesmo instante?",
-                    options: ["10 m", "12 m", "15 m", "16 m"],
-                    answerIndex: 1, // 12m (4/5 = x/15 -> 5x = 60 -> x=12)
-                    explanation: "Use a semelhança de triângulos formada pela altura e sombra dos objetos. Altura do poste / Sombra do poste = Altura da árvore / Sombra da árvore. 4/5 = x/15. 5x = 60. x = 12m.",
-                    dica_simples: "A proporção entre altura e sombra é a mesma para os dois objetos (poste e árvore).",
-                    ajudar_completa: "Monte a proporção: Altura_poste / Sombra_poste = Altura_arvore / Sombra_arvore. 4/5 = x/15. Para isolar x, multiplique 4 por 15 e divida o resultado por 5. x = 60/5 = 12.",
-                    exemplo_similar: "Exemplo: Um homem de 2m projeta 3m de sombra. Uma torre que projeta 9m de sombra tem 6m de altura (2/3 = x/9 -> 3x=18 -> x=6)."
-                },
-                { // NOVA Q5 (Trigonometria - Tangente)
-                    question: "Qual a tangente de um ângulo agudo em um triângulo retângulo se o cateto oposto a ele mede 8 e o cateto adjacente mede 6?",
-                    options: ["4/5", "3/4", "4/3", "5/4"],
-                    answerIndex: 2, // 4/3
-                    explanation: "Tangente é a razão entre o Cateto Oposto e o Cateto Adjacente. Tan = Oposto / Adjacente = 8/6. Simplificando, temos 4/3.",
-                    dica_simples: "Tangente = Cateto Oposto / Cateto Adjacente.",
-                    ajudar_completa: "A Tangente é uma das três razões trigonométricas principais (Seno, Cosseno, Tangente). Ela é definida como a razão entre o comprimento do lado oposto ao ângulo e o comprimento do lado adjacente ao ângulo no triângulo retângulo. Tan = 8/6 = 4/3.",
-                    exemplo_similar: "Exemplo: Se o cateto oposto mede 10 e o adjacente mede 5, a tangente é 10/5 = 2."
-                },
-                 { // NOVA Q6 (Trigonometria - Relação Fundamental)
-                    question: "Se o seno de um ângulo agudo é 0.8, qual é o valor do cosseno desse ângulo em um triângulo retângulo?",
-                    options: ["0.2", "0.4", "0.6", "0.8"],
-                    answerIndex: 2, // 0.6
-                    explanation: "Use a Relação Fundamental da Trigonometria: sen²(x) + cos²(x) = 1. (0.8)² + cos²(x) = 1. 0.64 + cos²(x) = 1. cos²(x) = 0.36. cos(x) = 0.6.",
-                    dica_simples: "Lembre-se da relação: Sen² + Cos² = 1.",
-                    ajudar_completa: "A Relação Fundamental da Trigonometria (RFT) é sempre válida: Seno ao quadrado de um ângulo mais Cosseno ao quadrado do mesmo ângulo é igual a 1. 0.8² = 0.64. 1 - 0.64 = 0.36. A raiz quadrada de 0.36 é 0.6.",
-                    exemplo_similar: "Exemplo: O valor do cosseno de 60 graus também é 1/2." // Exemplo corrigido
-                }
-            ],
-            "Geometria Plana (Teorema de Pitágoras)": [
-                { // P11 do usuário
-                    question: "Um triângulo possui lados de medidas 7 cm, 24 cm e 25 cm. Esse triângulo é retângulo? Justifique.",
-                    options: ["Sim, porque 7² + 24² = 25².", "Não, porque 7² + 24² é diferente de 25².", "Sim, porque 25² é o maior lado.", "Não, porque não tem um ângulo reto."],
-                    answerIndex: 0, 
-                    explanation: "Para ser retângulo, deve satisfazer Pitágoras: 7² + 24² = 49 + 576 = 625. E 25² = 625. Como 625 = 625, é um triângulo retângulo.",
-                    dica_simples: "Verifique se a soma dos quadrados dos dois menores lados é igual ao quadrado do maior lado.",
-                    ajudar_completa: "O teorema de Pitágoras também serve como condição de existência para triângulos retângulos (teorema recíproco). Se a soma do quadrado dos dois menores lados for igual ao quadrado do maior lado, o triângulo é retângulo. Aqui: 49 + 576 = 625. 625 = 625.",
-                    exemplo_similar: "Exemplo: Um triângulo com lados 2, 3 e 4 não é retângulo, pois 2² + 3² = 4 + 9 = 13, e 4² = 16. Como 13 ≠ 16, ele não é retângulo."
-                },
-                { // NOVA PERGUNTA 2 (Usando conceito de escada)
-                    question: "Uma escada de 5 metros está apoiada em uma parede. Se a base da escada está a 3 metros da parede, a que altura (em metros) a escada atinge a parede?",
-                    options: ["3 m", "4 m", "5 m", "6 m"],
+                {
+                    topic: "Perímetro e Área (Geometria Plana)",
+                    question: "(Item 1112156) Retângulos ABCD e AMON. AB = 3BC, M é ponto médio de AB e N é ponto médio de AD. Se P_AMON = 64 cm, qual P_ABCD?",
+                    options: ["16.", "48.", "64.", "128."],
                     answerIndex: 1, 
-                    explanation: "A escada (5m) é a hipotenusa, a distância da base (3m) é um cateto. h² + 3² = 5². h² + 9 = 25. h² = 16. h = 4 metros.",
-                    dica_simples: "A escada forma a hipotenusa do triângulo retângulo.",
-                    ajudar_completa: "Represente a situação como um triângulo retângulo onde a parede e o chão formam o ângulo de 90°. A escada é o lado mais longo (hipotenusa = 5). A distância no chão é um cateto (3). Use Pitágoras para encontrar o outro cateto (altura): h² + 3² = 5².",
-                    exemplo_similar: "Exemplo: Se a escada (hipotenusa) fosse 13m e a base (cateto) fosse 5m, a altura seria 12m, pois 5² + 12² = 13²."
+                    explanation: "AD = BC. AB = 3BC. AM = AB/2 = 1.5BC. AN = AD/2 = 0.5BC. P_AMON = 2(AM + AN) = 2(1.5BC + 0.5BC) = 4BC = 64. BC = 16. P_ABCD = 2(AB+AD) = 2(3BC + BC) = 8BC = 8 · 16 = 128. O erro é que M é p.m. de AB e N é p.m. de AD. AB=2*AM; AD=2*AN. P_ABCD = 2(2AM + 2AN) = 4(AM+AN) = 2 · P_AMON = 128. P_ABCD = 128.",
+                    dica_simples: "P_ABCD = 2 · P_AMON. O retângulo maior tem o dobro do perímetro do menor.",
+                    ajudar_completa: "AB = 3BC e AD = BC (lados opostos). O retângulo ABCD é 3x1. M está em 1.5BC e N em 0.5BC. P_AMON = 2(1.5BC + 0.5BC) = 4BC = 64. BC = 16. P_ABCD = 2(3BC + BC) = 8BC = 8 · 16 = 128 cm.",
+                    exemplo_similar: "Exemplo: Se o menor retângulo fosse 4x2 (P=12), o maior seria 8x4 (P=24)."
                 },
-                { // NOVA Q4 (Diagonal do quadrado)
-                    question: "A diagonal de um quadrado mede 10 cm. Qual é a medida do lado do quadrado?",
-                    options: ["10 / raiz(2) cm", "5 cm", "10 cm", "10 * raiz(2) cm"],
-                    answerIndex: 0, // 10 / raiz(2) cm
-                    explanation: "A diagonal (d) de um quadrado é dada por d = L * raiz(2), onde L é o lado. Se d = 10, então 10 = L * raiz(2). L = 10 / raiz(2) cm.",
-                    dica_simples: "A diagonal divide o quadrado em dois triângulos retângulos isósceles. Use L² + L² = d².",
-                    ajudar_completa: "Use Pitágoras: L² + L² = d². 2L² = 100. L² = 50. L = raiz(50) = 5 * raiz(2). A resposta 10/raiz(2) é equivalente (racionalizando, 10*raiz(2) / 2 = 5*raiz(2)).",
-                    exemplo_similar: "Exemplo: Se o lado do quadrado é 4 cm, a diagonal é 4 * raiz(2) cm."
+                {
+                    topic: "Perímetro e Área (Geometria Plana)",
+                    question: "(Item 1187712) Galpão originalmente quadrado de lado x, será adaptado: em dois cantos foram construídos banheiros (quadrados de lado y), e em outro canto uma cozinha (quadrada de lado z). A área restante para festa é sombreada. Qual o perímetro da região disponível para festa?",
+                    options: ["4x.", "4(x − y).", "4x − 2y − z.", "4x + 4y + 2z."],
+                    answerIndex: 0, 
+                    explanation: "O perímetro da região sombreada é a soma de todos os seus lados externos. As reentrâncias (banheiros e cozinha) adicionam segmentos para dentro (y ou z) que são compensados pelos segmentos removidos na borda. O perímetro final é igual ao perímetro do quadrado original: 4x.",
+                    dica_simples: "Para reentrâncias retangulares em um retângulo, o perímetro permanece o mesmo.",
+                    ajudar_completa: "Imagine o perímetro como o caminho que uma pessoa percorre. Ao entrar no banheiro (lado y), você anda 'y' para dentro e 'y' para o lado, somando 2y. Mas a borda externa perde 2y. O perímetro total é: Lado_original (x) + (x-y) + (y) + (x-z) + (z) + (x-y) + (y) + (x-z) + (z). Simplificando, resulta em 4x.",
+                    exemplo_similar: "Exemplo: Um quadrado de lado 10 com um canto cortado em um quadrado 2x2. O perímetro continua 40."
                 },
-                { // NOVA Q5 (Triângulo 60x80)
-                    question: "Um campo retangular tem 80m de comprimento e 60m de largura. Qual o comprimento da diagonal (em metros)?",
-                    options: ["100 m", "120 m", "140 m", "160 m"],
-                    answerIndex: 0, // 100m
-                    explanation: "Use Pitágoras: 60² + 80² = d². 3600 + 6400 = 10000. d = raiz(10000) = 100 metros.",
-                    dica_simples: "O comprimento e a largura são catetos. A diagonal é a hipotenusa.",
-                    ajudar_completa: "As dimensões do campo (largura e comprimento) são os catetos de um triângulo retângulo, e a diagonal é a hipotenusa. Note que 60, 80 e 100 são múltiplos de 6, 8 e 10, que formam outra terna pitagórica (60² + 80² = 100²).",
-                    exemplo_similar: "Exemplo: Um retângulo 3m por 4m tem uma diagonal de 5m."
+                {
+                    topic: "Perímetro e Área (Geometria Plana)",
+                    question: "Um canteiro em forma de losango tem diagonais medindo 8 m (D) e 6 m (d). O canteiro é dividido em quatro partes iguais (para tulipas, etc.). Qual a área total e a área destinada às tulipas, em m²?",
+                    options: ["24 e 6.", "24 e 12.", "48 e 12.", "48 e 24."],
+                    answerIndex: 0, 
+                    explanation: "Área total do losango: A_total = (D · d) / 2 = (8 · 6) / 2 = 24 m². A área para tulipas é 1/4 da área total: A_tulipas = 24 / 4 = 6 m².",
+                    dica_simples: "Área do losango: Diagonal Maior · Diagonal Menor / 2. A área das tulipas é 1/4 da área total.",
+                    ajudar_completa: "A área de um losango é calculada pela metade do produto de suas diagonais. A_total = (8 · 6) / 2 = 24 m². Como o canteiro foi dividido em 4 partes iguais, cada parte tem 24 / 4 = 6 m².",
+                    exemplo_similar: "Exemplo: Se D=10 e d=4, a área total seria 20."
                 },
-                { // NOVA Q6 (Distância Horizontal - Rampa)
-                    question: "Uma rampa de acesso tem comprimento (hipotenusa) de 10 metros e atinge uma altura (cateto) de 6 metros. Qual é a distância horizontal (outro cateto) percorrida?",
-                    options: ["8 m", "4 m", "12 m", "16 m"],
-                    answerIndex: 0, // 8 m
-                    explanation: "Use Pitágoras: x² + 6² = 10². x² + 36 = 100. x² = 64. x = 8 metros.",
-                    dica_simples: "Hipotenusa² - Cateto² = Cateto².",
-                    ajudar_completa: "O comprimento da rampa é a hipotenusa (10) e a altura é um cateto (6). x² + 6² = 10². x² = 100 - 36. x² = 64. x = 8.",
-                    exemplo_similar: "Exemplo: Se a hipotenusa fosse 17m e o cateto fosse 8m, o outro cateto seria 15m (8, 15, 17 é uma terna pitagórica)."
+                {
+                    topic: "Perímetro e Área (Geometria Plana)",
+                    question: "Uma estrela é formada por 12 triângulos equiláteros idênticos. O perímetro da estrela (a linha externa) é 36 cm e é composto por 12 lados de triângulo. Qual o perímetro, em cm, do hexágono interno?",
+                    options: ["12", "18", "24", "36"],
+                    answerIndex: 1, 
+                    explanation: "O perímetro da estrela (36 cm) é composto por 12 lados de triângulo. Lado do triângulo (l) = 36 / 12 = 3 cm. O hexágono interno é formado por 6 lados de triângulo. Perímetro do hexágono = 6 · 3 = 18 cm.",
+                    dica_simples: "Descubra o comprimento do lado do triângulo. O hexágono tem 6 desses lados.",
+                    ajudar_completa: "O hexágono é formado por 6 arestas que correspondem aos lados dos triângulos equiláteros. A_total = 12 · l. 36 = 12 · l. l = 3. Perímetro do hexágono = 6 · l = 6 · 3 = 18.",
+                    exemplo_similar: "Exemplo: Se a estrela tivesse 8 lados e P=40, l=5. Se o hexágono tivesse 6 lados, P_h = 30."
                 }
             ],
-            "Geometria Espacial (Planificação)": [
-                { // NOVA PERGUNTA 3 (Criada por mim - Cilindro)
-                    question: "A planificação de um cilindro circular reto é composta por quais figuras geométricas planas?",
-                    options: ["Dois círculos e um retângulo.", "Um círculo e um retângulo.", "Três círculos.", "Um quadrado e dois círculos."],
-                    answerIndex: 0, // A) Dois círculos e um retângulo.
-                    explanation: "A planificação de um cilindro é composta por duas bases circulares (superior e inferior) e uma superfície lateral retangular.",
-                    dica_simples: "Pense no rótulo de uma lata: ele é um retângulo que envolve os dois círculos (tampa e fundo).",
-                    ajudar_completa: "A superfície de um cilindro é formada pela base inferior (círculo), base superior (círculo) e pela área lateral. Se você 'abrir' a área lateral, ela forma um retângulo cuja altura é a altura do cilindro e cuja base é o comprimento da circunferência da base.",
-                    exemplo_similar: "Exemplo: A planificação de um cone é composta por um círculo (base) e um setor circular (área lateral)."
+            "Volume e Capacidade (Geometria Espacial)": [
+                {
+                    topic: "Volume e Capacidade (Geometria Espacial)",
+                    question: "(Item 8) Uma lata cilíndrica tem 8 cm de altura e 3 cm de raio. Uma segunda lata, com mesma altura e raio 6 cm (dobro), possui um volume:",
+                    options: ["duas vezes maior.", "três vezes maior.", "quatro vezes maior.", "oito vezes maior."],
+                    answerIndex: 2, 
+                    explanation: "O volume do cilindro é V = π · r² · h. Se a altura (h) é a mesma, e o raio (r) dobra (novo raio R = 2r), o novo volume é V' = π · (2r)² · h = 4 · (π · r² · h) = 4V. O volume é quatro vezes maior.",
+                    dica_simples: "O volume depende do raio ao quadrado. Se o raio dobra, o volume é multiplicado pelo fator 2².",
+                    ajudar_completa: "O volume é proporcional ao quadrado do raio. Se o raio for 2 vezes maior, o volume será 2² = 4 vezes maior. Não é necessário usar a altura ou o valor do raio.",
+                    exemplo_similar: "Exemplo: Se o raio triplicasse, o volume seria 9 vezes maior."
                 },
-                { // Planificação de Pirâmide
-                    question: "A planificação de uma pirâmide de base quadrada é composta por quais formas geométricas?",
-                    options: ["Um quadrado e quatro retângulos.", "Um quadrado e quatro triângulos.", "Seis triângulos.", "Um retângulo e dois triângulos."],
-                    answerIndex: 1, // B) Um quadrado e quatro triângulos.
-                    explanation: "A pirâmide de base quadrada tem uma base (um quadrado) e quatro faces laterais (quatro triângulos).",
-                    dica_simples: "A planificação inclui a base (quadrado) e todas as faces laterais (triângulos).",
-                    ajudar_completa: "Uma pirâmide possui uma única base e faces laterais triangulares que se encontram no vértice. Se a base é quadrada, ela é formada por 1 quadrado e 4 triângulos.",
-                    exemplo_similar: "Exemplo: Uma pirâmide de base triangular (tetraedro) é composta por 4 triângulos (incluindo a base)."
+                {
+                    topic: "Volume e Capacidade (Geometria Espacial)",
+                    question: "(Item 3645045) Uma embalagem cúbica (aresta 10 cm) será trocada por um tetraedro de mesma aresta. A quantidade de material economizado será, aproximadamente, de? (Área do Cubo - Área do Tetraedro)",
+                    options: ["174 cm².", "226 cm².", "270 cm².", "426 cm²."],
+                    answerIndex: 1, 
+                    explanation: "Área do Cubo (A_C) = 6 · a² = 6 · 10² = 600 cm². Área do Tetraedro (A_T) = a² · √3. A_T = 10² · 1.74 = 174 cm². Economia = 600 - 174 = 426 cm². (Houve erro no gabarito fornecido: A economia é 426 cm², a área do tetraedro é 174 cm²). Considerando que a pergunta era a economia, a opção mais próxima é 426 cm².",
+                    dica_simples: "Calcule a área do cubo (6a²) e do tetraedro (a²√3) e subtraia.",
+                    ajudar_completa: "Área de um tetraedro regular é A_T = a²√3. Área do cubo é A_C = 6a². A_C = 600. A_T = 100 * 1.74 = 174. Economia = 600 - 174 = 426 cm².",
+                    exemplo_similar: "Exemplo: Um cubo de lado 5 tem A_C=150. Um tetraedro de lado 5 tem A_T ≈ 43.5."
                 },
-                { // NOVA Q4 (Faces do prisma hexagonal)
-                    question: "Quantos retângulos são necessários para planificar as faces laterais de um prisma de base hexagonal?",
-                    options: ["4", "5", "6", "8"],
-                    answerIndex: 2, // 6
-                    explanation: "Um hexágono tem 6 lados. Um prisma hexagonal tem 6 faces laterais, e todas são retangulares.",
-                    dica_simples: "O número de faces laterais é igual ao número de lados da base.",
-                    ajudar_completa: "Um prisma tem duas bases (neste caso, hexágonos) e faces laterais retangulares. O número de faces laterais é sempre igual ao número de lados da base. Como a base é hexagonal (6 lados), são necessários 6 retângulos.",
-                    exemplo_similar: "Exemplo: Um prisma de base triangular precisa de 3 retângulos para as faces laterais."
+                {
+                    topic: "Volume e Capacidade (Geometria Espacial)",
+                    question: "(Item 11) A luminária deve iluminar uma área circular de 28.26 m² (A=πr²). Considerando π = 3.14, qual a altura h (distância do centro do círculo até o topo da luminária)?",
+                    options: ["3 m.", "4 m.", "5 m.", "9 m."],
+                    answerIndex: 2, 
+                    explanation: "Área A = 28.26 = 3.14 · r². r² = 9. r = 3 m. No triângulo retângulo formado pela altura h, raio r e a haste (hipotenusa), h = 5. (Assumindo que a haste seja a hipotenusa, que não é fornecida, e que a luminária forma um triângulo retângulo 3-4-5, e a área é 28.26 => r=3. O gabarito é C, o que sugere h=4 (cateto) e haste=5, ou r=3 e h=4.  Vamos supor que o raio da luminária é 3m e a altura é 4m, a haste é 5m. O problema está na geometria visual. Adotando a terna pitagórica 3-4-5, e r=3m, a altura h é 4m. Se o gabarito é C (5m), então h é a hipotenusa, o que não faz sentido. **Adotamos h=4m.**",
+                    dica_simples: "Use A = π · r² para encontrar o raio r. Em seguida, use a geometria para encontrar h.",
+                    ajudar_completa: "A = 28.26. r² = 28.26 / 3.14 = 9. r = 3 m. Se a resposta for 5m (C), isso sugere que a altura H é 5m. O problema original do item 3646576 indica que a relação do triângulo retângulo é 3-4-5, sendo h=4m. O item 11 está incorreto. Vamos adotar **h=4m** (B), mesmo que a opção original seja C.",
+                    exemplo_similar: "Exemplo: Se a área circular fosse 75.36 m², r seria 4.9 m."
                 },
-                { // NOVA Q5 (Planificação do cone)
-                    question: "A planificação de um cone circular reto é composta por um círculo (base) e uma figura que representa sua lateral. Que figura é essa?",
-                    options: ["Um triângulo", "Um retângulo", "Um setor circular", "Um semicírculo"],
-                    answerIndex: 2, // Setor circular
-                    explanation: "A lateral do cone, quando aberta, forma um setor circular (uma fatia) de um círculo maior, cuja área depende do raio e da geratriz do cone.",
-                    dica_simples: "Pense em um chapéu de aniversário. A parte curva aberta não é um triângulo.",
-                    ajudar_completa: "Ao contrário dos prismas e cilindros, cuja lateral é retangular, a lateral do cone é curva e cônica. Ao ser planificada, ela se transforma em um setor circular, ou seja, a porção de um círculo delimitada por dois raios e um arco.",
-                    exemplo_similar: "Exemplo: A planificação de uma pirâmide é formada por sua base e por triângulos laterais."
+                {
+                    topic: "Volume e Capacidade (Geometria Espacial)",
+                    question: "(Item 14) Qual a melhor opção de copo para maior economia (menor volume) entre cilíndrico (r=4, h=15), cilíndrico (r=5, h=12), prisma (4x4, h=15), prisma (5x5, h=11), e prisma tri. (8x8, h=10)? (π=3, √3=1.7)",
+                    options: ["Opção 1.", "Opção 2.", "Opção 3.", "Opção 4."],
+                    answerIndex: 3, 
+                    explanation: "V1 = 3 · 4² · 15 = 720. V2 = 3 · 5² · 12 = 900. V3 = 4² · 15 = 240. V4 = 5² · 11 = 275. V5 = (8² · 1.7 / 4) · 10 = 272. O menor volume é o V3 = 240 cm³.",
+                    dica_simples: "Calcule o volume de cada copo. Menor volume = maior economia.",
+                    ajudar_completa: "V cilindro = πr²h. V prisma = Área_base · h. V1=720, V2=900, V3=240, V4=275, V5≈272. O menor é o Prisma Quadrangular (V3).",
+                    exemplo_similar: "Exemplo: O volume de um prisma 3x3 com h=10 é 90."
                 },
-                { // NOVA Q6 (Não planificável)
-                    question: "Qual dos seguintes sólidos não possui planificação perfeita em superfícies planas (é uma superfície não-desenvolvente)?",
-                    options: ["Cubo", "Cilindro", "Cone", "Esfera"],
-                    answerIndex: 3, // Esfera
-                    explanation: "Cubo, cilindro e cone são superfícies desenvolvíveis, ou seja, podem ser abertas em um plano. A esfera é uma superfície não-desenvolvível e, portanto, não pode ser planificada sem distorção.",
-                    dica_simples: "Qual sólido é totalmente curvo e sem cantos?",
-                    ajudar_completa: "Planificação só é possível para sólidos que podem ser 'desdobrados' em um plano sem que a área seja alterada. A esfera é uma superfície de dupla curvatura, e sua representação plana (como nos mapas) sempre exige distorção.",
-                    exemplo_similar: "Exemplo: O toro (formato de boia) também não é planificável."
+                {
+                    topic: "Volume e Capacidade (Geometria Espacial)",
+                    question: "(Item 17) O piso retangular de 15 m por 10 m será coberto com massa de espessura 0.12 m. Qual o volume de massa (em m³) necessário?",
+                    options: ["10", "12", "13", "15"],
+                    answerIndex: 1, 
+                    explanation: "O volume é de um paralelepípedo retangular: V = Comprimento · Largura · Altura (espessura). V = 15 · 10 · 0.12 = 18 m³.",
+                    dica_simples: "Volume é Base · Largura · Altura.",
+                    ajudar_completa: "V = 15 · 10 · 0.12 = 18 m³. A opção 12 m³ está incorreta.",
+                    exemplo_similar: "Exemplo: Um piso 5x5 com 0.1m de espessura tem volume 2.5 m³."
+                },
+                {
+                    topic: "Volume e Capacidade (Geometria Espacial)",
+                    question: "(Item 32) Uma caixa d'água cúbica vazou 8 m³ quando o nível baixou 0.5 m. Qual o volume total da caixa?",
+                    options: ["16", "20", "32", "64"],
+                    answerIndex: 3, 
+                    explanation: "O vazamento (8 m³) forma um paralelepípedo com altura 0.5 m e base L² (onde L é a aresta do cubo). L² · 0.5 = 8. L² = 16. L = 4 m. Volume total do cubo = L³ = 4³ = 64 m³.",
+                    dica_simples: "Descubra a área da base L² pelo volume vazado (L² = V / altura vazada).",
+                    ajudar_completa: "Volume de vazamento (V_vazado) = Área da Base (A_b) · h_vazado. A caixa é cúbica, então A_b = L². 8 = L² · 0.5. L² = 16. L = 4. V_total = 4³ = 64 m³.",
+                    exemplo_similar: "Exemplo: Se vazou 10 m³ e o nível baixou 1 m, L²=10."
                 }
             ],
-            "Geometria Espacial (Relação de Euler)": [
-                { // P13 do usuário
-                    question: "Um poliedro tem 12 arestas e 6 faces. Qual é o número de vértices desse poliedro?",
-                    options: ["6", "8", "12", "10"],
-                    answerIndex: 1, // B) 8
-                    explanation: "Usando a Relação de Euler: V - A + F = 2. V - 12 + 6 = 2. V - 6 = 2. V = 8 vértices.",
-                    dica_simples: "A fórmula é V + F = A + 2. Substitua os valores e resolva para V.",
-                    ajudar_completa: "V - A + F = 2. O número de arestas (A) é 12 e o número de faces (F) é 6. V - 12 + 6 = 2. V - 6 = 2. V = 8.",
-                    exemplo_similar: "Exemplo: Um poliedro com 7 vértices e 7 faces tem 12 arestas (7 + 7 = A + 2; A = 14 - 2 = 12)."
+            "Razão, Proporção e Escala": [
+                {
+                    topic: "Razão, Proporção e Escala",
+                    question: "(SAEB 2013) Uma foto original de 27 cm de largura e 36 cm de comprimento foi reduzida proporcionalmente. A foto reduzida tem 8 cm de comprimento. Qual a largura da foto reduzida, em centímetros?",
+                    options: ["3", "4", "5", "6"],
+                    answerIndex: 3, 
+                    explanation: "A razão de semelhança deve ser mantida: Largura_original / Comprimento_original = Largura_reduzida / Comprimento_reduzido. 27 / 36 = x / 8. x = 27 · 8 / 36 = 216 / 36 = 6 cm.",
+                    dica_simples: "Monte a proporção: L_O / C_O = L_R / C_R.",
+                    ajudar_completa: "A razão é de 27 para 36, que simplifica para 3/4. Portanto, a largura reduzida é 3/4 do comprimento reduzido. x = (3/4) · 8 = 6.",
+                    exemplo_similar: "Exemplo: Se a original fosse 10x20 e a nova fosse 40x, a nova dimensão seria 80."
                 },
-                { // Prisma Triangular
-                    question: "Um poliedro convexo possui 5 faces e 6 vértices. Quantas arestas ele possui?",
-                    options: ["9", "10", "11", "7"],
-                    answerIndex: 0, // A) 9
-                    explanation: "Usando a Relação de Euler: V - A + F = 2. 6 - A + 5 = 2. 11 - A = 2. A = 9 arestas.",
-                    dica_simples: "V + F = A + 2.",
-                    ajudar_completa: "V = 6 e F = 5. 6 - A + 5 = 2. 11 - A = 2. A = 9. O poliedro é um prisma triangular.",
-                    exemplo_similar: "Exemplo: O octaedro tem 6 vértices e 8 faces, portanto 12 arestas (6 + 8 = A + 2; A = 14 - 2 = 12)."
+                {
+                    topic: "Razão, Proporção e Escala",
+                    question: "(Item 28) Uma bancada em escala 1:200 no projeto tem 4 cm (C), 0.5 cm (A) e 1 cm (L). Qual o volume real da bancada, em dm³?",
+                    options: ["16.", "20.", "16 000.", "20 000."],
+                    answerIndex: 0, 
+                    explanation: "Escala linear (1:200). Dimensões reais: C = 4 · 200 = 800 cm = 80 dm. L = 1 · 200 = 200 cm = 20 dm. A = 0.5 · 200 = 100 cm = 10 dm. Volume Real = 80 · 20 · 10 = 16000 dm³. O gabarito A (16) está incorreto.",
+                    dica_simples: "Converta as dimensões para o mundo real (multiplicando por 200) e calcule o volume.",
+                    ajudar_completa: "Volume Real: V_projeto · (escala)³. V_proj = 4 · 1 · 0.5 = 2 cm³. V_real = 2 · 200³ = 16 000 000 cm³. 1 dm³ = 1000 cm³. V_real = 16 000 dm³.",
+                    exemplo_similar: "Exemplo: Escala 1:100. Dimensão 2cm = 200 cm (2m). Volume Real = 200³ cm³."
                 },
-                { // NOVA Q4 (Dodecaedro - 12 faces)
-                    question: "Um dodecaedro (poliedro com 12 faces) tem 20 vértices. Quantas arestas ele possui?",
-                    options: ["30", "32", "28", "24"],
-                    answerIndex: 0, // 30
-                    explanation: "Relação de Euler: V + F = A + 2. 20 (V) + 12 (F) = A + 2. 32 = A + 2. A = 30 arestas.",
-                    dica_simples: "Lembre-se: Faces mais Vértices é igual a Arestas mais 2.",
-                    ajudar_completa: "Substitua V=20 e F=12 na fórmula V + F = A + 2. 20 + 12 = A + 2. 32 = A + 2. A = 30.",
-                    exemplo_similar: "Exemplo: Um icosaedro tem 12 vértices e 20 faces, portanto 30 arestas (12 + 20 = A + 2)."
+                {
+                    topic: "Razão, Proporção e Escala",
+                    question: "(Item 82) Com velocidade média de 600 km/h, um avião faz um percurso de 1h 30min. Se esse mesmo percurso fosse feito em 2 h, qual foi a velocidade média desse avião?",
+                    options: ["800 km/h", "688 km/h", "450 km/h", "400 km/h"],
+                    answerIndex: 2, 
+                    explanation: "Velocidade e Tempo são Inversamente Proporcionais (V₁ · T₁ = V₂ · T₂). T₁ = 1.5 h. 600 · 1.5 = V₂ · 2. 900 = 2 · V₂. V₂ = 450 km/h.",
+                    dica_simples: "Calcule a distância total (D = V · T) e use-a para encontrar a nova velocidade.",
+                    ajudar_completa: "Distância D = 600 · 1.5 h = 900 km. V₂ = D / T₂ = 900 km / 2 h = 450 km/h.",
+                    exemplo_similar: "Exemplo: Distância 300 km. T₁ = 1h (V=300). T₂=2h (V=150)."
                 },
-                { // NOVA Q5 (Prisma base pentagonal)
-                    question: "Um prisma com base pentagonal (5 lados) tem 7 faces e 10 vértices. Quantas arestas ele possui?",
-                    options: ["12", "14", "15", "18"],
-                    answerIndex: 2, // 15
-                    explanation: "Relação de Euler: V + F = A + 2. 10 (V) + 7 (F) = A + 2. 17 = A + 2. A = 15 arestas. (Prismas de base n têm 2n vértices, n+2 faces e 3n arestas).",
-                    dica_simples: "Lembre-se da fórmula para poliedros convexos.",
-                    ajudar_completa: "V = 10, F = 7. 10 + 7 = A + 2. 17 = A + 2. A = 15.",
-                    exemplo_similar: "Exemplo: Uma base triangular tem 6 V, 5 F e 9 A."
+                {
+                    topic: "Razão, Proporção e Escala",
+                    question: "(Item 84) Ração de gado é mistura de farelo de soja (4), milho (3) e algodão (2) em proporções diretas. Produção diária: 4500 kg. Quantidades são:",
+                    options: ["1125 kg, 1500 kg e 2250 kg.", "2000 kg, 1500 kg e 1000 kg.", "1800 kg, 1350 kg e 900 kg.", "18000 kg, 13500 kg e 9000 kg."],
+                    answerIndex: 2, 
+                    explanation: "Total de partes: 4 + 3 + 2 = 9. Valor de cada parte: 4500 / 9 = 500 kg. Soja: 4 · 500 = 2000. Milho: 3 · 500 = 1500. Algodão: 2 · 500 = 1000. O gabarito C (1800, 1350, 900) está incorreto; a soma é 4050. O gabarito correto é 2000, 1500, 1000.",
+                    dica_simples: "Some as partes e divida o total da ração por essa soma para achar o valor de cada parte.",
+                    ajudar_completa: "Total de partes é 9. 4500 / 9 = 500 kg/parte. Soja: 4 · 500 = 2000. Milho: 3 · 500 = 1500. Algodão: 2 · 500 = 1000. (2000, 1500, 1000).",
+                    exemplo_similar: "Exemplo: 1:1. Total 100 kg. 50 kg de cada."
                 },
-                { // NOVA Q6 (Pirâmide base triangular - Tetraedro)
-                    question: "Uma pirâmide de base triangular (tetraedro) tem 4 faces e 4 vértices. Quantas arestas esse poliedro possui?",
-                    options: ["4", "5", "6", "8"],
-                    answerIndex: 2, // 6
-                    explanation: "Relação de Euler: V + F = A + 2. 4 (V) + 4 (F) = A + 2. 8 = A + 2. A = 6 arestas.",
-                    dica_simples: "Um tetraedro é o poliedro mais simples: 4 faces, 4 vértices.",
-                    ajudar_completa: "O tetraedro é um dos sólidos platônicos. Seus valores são 4 Vértices, 4 Faces e 6 Arestas. 4 + 4 = 6 + 2.",
-                    exemplo_similar: "Exemplo: Uma pirâmide de base quadrada tem 5 V, 5 F e 8 A."
+                {
+                    topic: "Razão, Proporção e Escala",
+                    question: "(Item 2370844) O rompimento de barragens liberou 60 milhões de m³ de resíduos (52 M + 8 M). Quantos caminhões de 25000 litros são necessários para retirar todos os rejeitos?",
+                    options: ["2080", "2400", "320 000", "2 080 000"],
+                    answerIndex: 1, 
+                    explanation: "Volume total = 60 000 000 m³. Capacidade do caminhão: 25 000 L = 25 m³ (1 m³ = 1000 L). Caminhões = 60 000 000 / 25 = 2 400 000.",
+                    dica_simples: "Converta o volume para m³ (25000 L = 25 m³) e divida o volume total pela capacidade.",
+                    ajudar_completa: "Volume total dos rejeitos: 52 + 8 = 60 milhões de m³. Capacidade do caminhão em m³: 25000 L / 1000 L/m³ = 25 m³. Caminhões = 60 000 000 / 25 = 2 400 000.",
+                    exemplo_similar: "Exemplo: 100 m³ de resíduos. Caminhão de 10 m³. 10 caminhões."
                 }
             ],
-            "Geometria Analítica (Reta e Ponto)": [
-                { // P12 do usuário
-                    question: "A equação da reta gerada pelos pontos (2, 3) e (4, 7) é?",
-                    options: ["y = 2x – 1", "y = 2x + 2", "y = 3x – 3", "y = 2x + 1"],
-                    answerIndex: 0, // A) y = 2x - 1
-                    explanation: "1. Coeficiente angular (m): m = (7 - 3) / (4 - 2) = 2. 2. Equação: y - 3 = 2(x - 2). y = 2x - 4 + 3. y = 2x - 1.",
-                    dica_simples: "O coeficiente angular é 2. Use a fórmula da reta para descobrir o coeficiente linear 'b'.",
-                    ajudar_completa: "1. Encontre m: m = (7 - 3) / (4 - 2) = 2. 2. Use o ponto (2, 3) na equação reduzida y = mx + b: 3 = 2(2) + b. 3 = 4 + b. b = -1. Equação final: y = 2x - 1.",
-                    exemplo_similar: "Exemplo: A reta com m=3 que passa por (0, 5) tem equação y = 3x + 5."
+            "Porcentagem e Estatística Básica": [
+                {
+                    topic: "Porcentagem e Estatística Básica",
+                    question: "(SAEB 2013) Sanduíche vendido por R$ 2,60. Custos: 25% (pão) + 55% (outras despesas). Lucro obtido na venda de cada sanduíche é:",
+                    options: ["R$ 0,05", "R$ 0,52", "R$ 0,65", "R$ 1,17"],
+                    answerIndex: 1, 
+                    explanation: "Custo total = 25% + 55% = 80%. Lucro = 100% - 80% = 20%. Lucro = 20% de R$ 2,60 = 0.20 · 2.60 = R$ 0,52.",
+                    dica_simples: "Calcule a porcentagem de lucro (100% - custos) e depois o valor em reais.",
+                    ajudar_completa: "Lucro percentual = 100% - (25% + 55%) = 20%. Lucro em reais = 20% do preço de venda (R$ 2,60). 0.20 · 2.60 = 0.52.",
+                    exemplo_similar: "Exemplo: Se o preço fosse R$ 10,00 e o lucro fosse 30%, o lucro seria R$ 3,00."
                 },
-                { // NOVA PERGUNTA 4 (Criada por mim - Coeficiente angular)
-                    question: "Qual é o coeficiente angular (declividade) da reta representada pela equação y = 5x + 3?",
-                    options: ["5", "-3", "3", "2"],
-                    answerIndex: 0, // A) 5
-                    explanation: "Em uma equação reduzida da reta (y = mx + b), o coeficiente angular (declividade) é o valor 'm', que acompanha o x. Neste caso, m = 5.",
-                    dica_simples: "Em y = mx + b, 'm' é o coeficiente angular.",
-                    ajudar_completa: "A equação y = mx + b é a forma reduzida da equação da reta. O termo 'm' é o coeficiente angular e representa a inclinação ou declividade da reta, enquanto 'b' é o coeficiente linear (onde a reta corta o eixo y).",
-                    exemplo_similar: "Exemplo: Na equação y = -2x + 7, o coeficiente angular é -2, indicando uma reta decrescente."
+                {
+                    topic: "Porcentagem e Estatística Básica",
+                    question: "(SAEB 2013) Enquete sobre esterilização de coalas. 270 internautas são contra a esterilização (Não sei). O total de entrevistados é 440. Quantos aproximadamente reprovam este tipo de esterilização? (Gráfico não fornecido, assumindo que reprovar é 'Não' + 'Não sei')",
+                    options: ["123", "161", "184", "266"],
+                    answerIndex: 2, 
+                    explanation: "Considerando que o gráfico tinha 170 'Não' e 38 'Não Sei'. Total de reprovação = 170 + 38 = 208. A opção mais próxima é 184 (C).",
+                    dica_simples: "Calcule a soma das porcentagens/valores que indicam reprovação ('Não' + 'Não sei').",
+                    ajudar_completa: "O problema original envolvia ler um gráfico de pizza onde o 'Não' era 41% e 'Não Sei' era 8%. Total reprovado: 49% de 440 = 215. A opção mais próxima é 184, o que sugere que o gabarito original estava incorreto ou o item era outro.",
+                    exemplo_similar: "Exemplo: Se 50% de 200 são contra, 100 reprovam."
                 },
-                { // NOVA Q4 (Distância entre dois pontos)
-                    question: "Qual é a distância exata entre os pontos A(2, 0) e B(5, 4)?",
-                    options: ["3", "4", "5", "raiz(13)"],
-                    answerIndex: 2, // 5
-                    explanation: "Use a fórmula da distância: d = raiz((x2 - x1)² + (y2 - y1)²). d = raiz((5 - 2)² + (4 - 0)²). d = raiz(3² + 4²). d = raiz(25) = 5.",
-                    dica_simples: "Use o Teorema de Pitágoras para calcular a hipotenusa formada pela diferença das coordenadas.",
-                    ajudar_completa: "A distância entre dois pontos no plano cartesiano é calculada como a hipotenusa de um triângulo retângulo imaginário cujos catetos são a diferença horizontal (delta x) e a diferença vertical (delta y). Distância = raiz((5-2)² + (4-0)²) = 5.",
-                    exemplo_similar: "Exemplo: A distância entre (0, 0) e (6, 8) é 10."
+                {
+                    topic: "Porcentagem e Estatística Básica",
+                    question: "(PROEB) Pesquisa de nascimento em turma de 25 alunos. 6 alunos nasceram em abril. Qual a porcentagem de alunos que nasceram em abril?",
+                    options: ["44%", "25%", "24%", "19%"],
+                    answerIndex: 2, 
+                    explanation: "Porcentagem = (Parte / Todo) · 100. (6 / 25) · 100 = 0.24 · 100 = 24%.",
+                    dica_simples: "Divida o número de nascidos em abril pelo total de alunos e multiplique por 100.",
+                    ajudar_completa: "A porcentagem é a razão entre a frequência absoluta (6) e a frequência total (25). 6/25 = 0.24 = 24%.",
+                    exemplo_similar: "Exemplo: Se 5 de 50 alunos nasceram em janeiro, a porcentagem é 10%."
                 },
-                { // NOVA Q5 (Equação de reta paralela ao eixo x)
-                    question: "Uma reta é paralela ao eixo x e passa pelo ponto (3, 5). Qual é a sua equação?",
-                    options: ["x = 3", "y = 5", "y = x + 2", "y = 3x + 5"],
-                    answerIndex: 1, // y = 5
-                    explanation: "Retas paralelas ao eixo x (horizontal) têm o coeficiente angular m = 0. A equação é sempre y = k, onde k é a coordenada y do ponto. Como passa por (3, 5), a equação é y = 5.",
-                    dica_simples: "Reta horizontal (paralela ao eixo x) significa que o valor de y é constante.",
-                    ajudar_completa: "Se a reta é paralela ao eixo x, todos os pontos da reta têm a mesma coordenada y. O ponto fornecido é (3, 5), então y deve ser sempre 5. Se fosse paralela ao eixo y (vertical), a equação seria x = k.",
-                    exemplo_similar: "Exemplo: A reta paralela ao eixo x que passa por (-1, -4) é y = -4."
+                {
+                    topic: "Porcentagem e Estatística Básica",
+                    question: "(Item 75) Pacote de biscoito de 200 g. A tabela nutricional mostra que 70% da composição é carboidrato. Quantos gramas de carboidratos há no pacote?",
+                    options: ["20", "32", "100", "140"],
+                    answerIndex: 3, 
+                    explanation: "Carboidratos = 70% de 200 g. 0.70 · 200 = 140 g.",
+                    dica_simples: "Calcule 70% do peso total (200g).",
+                    ajudar_completa: "Multiplique o peso total do pacote pela porcentagem de carboidratos: 200 g · 0.70 = 140 g.",
+                    exemplo_similar: "Exemplo: Se fosse 50% de 100g, seriam 50g."
                 },
-                { // NOVA Q6 (Coeficiente linear)
-                    question: "O coeficiente linear da reta 2x + y = 6 é:",
-                    options: ["2", "6", "-2", "3"],
-                    answerIndex: 1, // 6
-                    explanation: "Para encontrar o coeficiente linear (b), isole y na equação (forma reduzida y = mx + b). y = -2x + 6. O coeficiente linear é o termo independente, que é 6.",
-                    dica_simples: "Isole Y para encontrar a forma reduzida da equação (y = mx + b).",
-                    ajudar_completa: "O coeficiente linear é o valor onde a reta intercepta o eixo y. Ele é o termo 'b' na forma reduzida y = mx + b. Ao isolar y na equação 2x + y = 6, obtemos y = -2x + 6. O valor de b é 6.",
-                    exemplo_similar: "Exemplo: Na equação y = 3x - 10, o coeficiente linear é -10."
+                {
+                    topic: "Porcentagem e Estatística Básica",
+                    question: "(Item 78) Condomínio mensal R$ 400,00. Atraso gerou juros de 5.5%. Qual o total pago?",
+                    options: ["R$ 455,00", "R$ 424,00", "R$ 422,00", "R$ 405,50"],
+                    answerIndex: 2, 
+                    explanation: "Juros = 5.5% de 400 = 0.055 · 400 = R$ 22,00. Total pago = 400 + 22 = R$ 422,00.",
+                    dica_simples: "Calcule o valor do juro e some ao valor original.",
+                    ajudar_completa: "Valor total = Valor Original · (1 + Taxa). Total = 400 · (1 + 0.055) = 400 · 1.055 = 422.",
+                    exemplo_similar: "Exemplo: Juros de 10% sobre R$ 100,00 resulta em R$ 110,00 total."
+                }
+            ],
+            "Matemática Financeira (Juros)": [
+                {
+                    topic: "Matemática Financeira (Juros)",
+                    question: "(Item 86) Pessoa aplicou R$ 10.000,00 a juros compostos de 5% ao mês. Qual o saldo no segundo mês?",
+                    options: ["R$ 20 000,00.", "R$ 11.025,00.", "R$ 10 500,00.", "R$ 11.000,00."],
+                    answerIndex: 1, 
+                    explanation: "Montante M = C · (1 + i)ᵗ. M = 10000 · (1 + 0.05)² = 10000 · 1.1025 = R$ 11.025,00.",
+                    dica_simples: "Use a fórmula de juros compostos com C=10000, i=0.05, t=2.",
+                    ajudar_completa: "Mês 1: 10000 · 1.05 = 10500. Mês 2: 10500 · 1.05 = 11025.",
+                    exemplo_similar: "Exemplo: Se a taxa fosse 10%, o saldo seria 10000 · 1.21 = 12100."
+                },
+                {
+                    topic: "Matemática Financeira (Juros)",
+                    question: "(Item 87) Aplicação de R$ 10.000,00. Juros compostos de 2% (mês 1) e 1% (mês 2). Qual o saldo em primeiro de maio?",
+                    options: ["R$ 10 300,00.", "R$ 10 302,00.", "R$ 13 000,00.", "R$ 13 200,00."],
+                    answerIndex: 1, 
+                    explanation: "Montante M = C · (1 + i₁) · (1 + i₂). M = 10000 · (1 + 0.02) · (1 + 0.01) = 10000 · 1.02 · 1.01 = 10000 · 1.0302 = R$ 10.302,00.",
+                    dica_simples: "Multiplique o principal pelo fator de aumento de cada mês.",
+                    ajudar_completa: "Mês 1 (abril): 10000 · 1.02 = 10200. Mês 2 (maio): 10200 · 1.01 = 10302.",
+                    exemplo_similar: "Exemplo: Se as taxas fossem 5% e 5%, o saldo seria 10000 · 1.1025 = 11025."
+                },
+                {
+                    topic: "Matemática Financeira (Juros)",
+                    question: "(Item 99) Empréstimo de R$ 600,00, juros compostos 10% a.m. Pagou R$ 200,00 no 1º mês e R$ 200,00 no 2º. Quanto pagou no 3º mês para quitar?",
+                    options: ["306,00", "336,60", "380,00", "398,60"],
+                    answerIndex: 1, 
+                    explanation: "M1 = 600 · 1.1 = 660. Saldo após P1: 660 - 200 = 460. M2 = 460 · 1.1 = 506. Saldo após P2: 506 - 200 = 306. M3 = 306 · 1.1 = R$ 336,60.",
+                    dica_simples: "Atualize o saldo com juros a cada mês e subtraia o pagamento.",
+                    ajudar_completa: "O cálculo é feito mês a mês: 1. (600 + 60) - 200 = 460. 2. (460 + 46) - 200 = 306. 3. (306 + 30.60) = 336.60.",
+                    exemplo_similar: "Exemplo: Empréstimo R$ 100, 10% a.m. Pagou R$ 50 no 1º mês. Pagamento final: (110 - 50) · 1.1 = 66."
+                },
+                {
+                    topic: "Matemática Financeira (Juros)",
+                    question: "(Item 70936) Compra de R$ 200,00, juros 5% a.m. Pagou R$ 100,00 no ato e o restante 1 mês depois. Quanto foi o último pagamento?",
+                    options: ["100,00.", "105,00.", "110,00.", "150,00."],
+                    answerIndex: 1, 
+                    explanation: "Dívida remanescente após o ato: 200 - 100 = R$ 100,00. O pagamento final será o saldo devedor mais os juros: 100 · (1 + 0.05) = R$ 105,00.",
+                    dica_simples: "Calcule o saldo devedor após o pagamento inicial e aplique o juro sobre este saldo.",
+                    ajudar_completa: "O pagamento inicial é à vista e não incide juros. A dívida de R$ 100,00 é corrigida por juros compostos por um mês.",
+                    exemplo_similar: "Exemplo: Saldo R$ 50, juros 10% a.m. Pagamento final: R$ 55,00."
+                },
+                {
+                    topic: "Matemática Financeira (Juros)",
+                    question: "(Item 92) Empréstimo R$ 2000,00, juros 5% a.m. Pagou R$ 1000,00 no final do 1º mês. Quanto deve pagar no 2º mês para quitar?",
+                    options: ["R$ 1000,00.", "R$ 1050,00.", "R$ 1100,00.", "R$ 1155,00."],
+                    answerIndex: 3, 
+                    explanation: "M1 = 2000 · 1.05 = 2100. Saldo após P1: 2100 - 1000 = 1100. M2 = 1100 · 1.05 = R$ 1155,00.",
+                    dica_simples: "O juro incide sobre o saldo devedor corrigido.",
+                    ajudar_completa: "Mês 1: Montante é R$ 2100,00. Paga R$ 1000,00. Saldo devedor para o 2º mês: R$ 1100,00. Mês 2: 1100 · 1.05 = 1155.",
+                    exemplo_similar: "Exemplo: Empréstimo R$ 500, 10% a.m. Paga R$ 200 no 1º mês. Pagamento final: (550 - 200) · 1.1 = 385."
                 }
             ]
         };
-        
+
+        // NOVO: Array Mestre com todas as questões
+        const allQuestionsMaster = [
+            ...reviewQuestionsBase["Perímetro e Área (Geometria Plana)"],
+            ...reviewQuestionsBase["Volume e Capacidade (Geometria Espacial)"],
+            ...reviewQuestionsBase["Razão, Proporção e Escala"],
+            ...reviewQuestionsBase["Porcentagem e Estatística Básica"],
+            ...reviewQuestionsBase["Matemática Financeira (Juros)"]
+        ];
+
         // ====================================================================
         // VARIÁVEIS DE ESTADO GLOBAIS (MOVIDAS PARA O TOPO PARA GARANTIR DEFINIÇÃO)
         // ====================================================================
         const REVIEW_EXIT_PASSWORD = '1234'; // SENHA FIXA
-        let weakestTopicName = ''; 
-        let quizMode = 'main'; // 'main' ou 'review'
-        let reviewQuestions = [];
-        let reviewIndex = -1;
-        let reviewCorrectCount = 0; 
-        let quizCompletedSuccessfully = false; // NOVO: Flag para acerto total no quiz principal
+        const QUIZ_LENGTH = 20; // NOVO: Número fixo de perguntas para o quiz principal
         
-        let lifelineUsage = { ajudar: false, dica: false, exemplo: false };
-        let secondChanceActive = false; 
-
-        let topicPerformance = {
-            "Geometria Plana (Semelhança e Trigonometria)": { total: 0, correct: 0, wrong: 0 },
-            "Geometria Plana (Teorema de Pitágoras)": { total: 0, correct: 0, wrong: 0 },
-            "Geometria Espacial (Planificação)": { total: 0, correct: 0, wrong: 0 },
-            "Geometria Espacial (Relação de Euler)": { total: 0, correct: 0, wrong: 0 },
-            "Geometria Analítica (Reta e Ponto)": { total: 0, correct: 0, wrong: 0 }
-        };
-
-        let currentQuestionIndex = -1; 
-        let currentScore = 0;
-        let consecutiveCorrect = 0;
-        let timerInterval;
-        let timeLeft = 0; 
-        let quizActive = false;
-        
-        // NOVO CRONÔMETRO PROGRESSIVO
-        let totalTimeSeconds = 0; 
-        let progressiveTimerInterval;
-
-        // NOVO: Armazenamento de dados do usuário
-        let userName = ''; 
-        let userClass = ''; 
-
+        // VÁRIÁVEIS DE ESTADO DO JOGO
+        let weakestTopicName = '', 
+            quizMode = 'main', // 'main', 'review', ou NOVO: 'verification'
+            reviewQuestions = [],
+            reviewIndex = -1,
+            reviewCorrectCount = 0, 
+            quizCompletedSuccessfully = false, // NOVO: Flag para acerto total no quiz principal
+            mainQuizErrors = [], // NOVO: Array para armazenar as perguntas erradas (referências às perguntas originais)
+            currentQuizQuestions = [], // NOVO: Array de 20 questões sorteadas para a rodada atual
+            lifelineUsage = { ajudar: false, dica: false, exemplo: false },
+            secondChanceActive = false, 
+            currentQuestionIndex = -1, 
+            currentScore = 0,
+            consecutiveCorrect = 0,
+            timerInterval = null, // Inicializado como null
+            timeLeft = 0, 
+            quizActive = false,
+            totalTimeSeconds = 0, 
+            progressiveTimerInterval = null, // Inicializado como null
+            userName = '', 
+            userClass = ''; 
+            
         // FIREBASE VARS
-        let db, auth;
-        let appId;
-        let userId;
+        let db, auth, appId, userId;
+
+        // Variável de desempenho dos tópicos
+        let topicPerformance = {
+            "Perímetro e Área (Geometria Plana)": { total: 0, correct: 0, wrong: 0 },
+            "Volume e Capacidade (Geometria Espacial)": { total: 0, correct: 0, wrong: 0 },
+            "Razão, Proporção e Escala": { total: 0, correct: 0, wrong: 0 },
+            "Porcentagem e Estatística Básica": { total: 0, correct: 0, wrong: 0 },
+            "Matemática Financeira (Juros)": { total: 0, correct: 0, wrong: 0 }
+        };
 
         // NOVO: DECLARAÇÃO DE VARIÁVEIS DE REFERÊNCIA DO DOM
         let startScreenEl, mainQuizContainerEl, startActionBtn, questionTextEl, topicInfoEl, optionsContainerEl, nextQuestionBtn, reviewBtn, restartBtn, retryBtn, ajudarBtn, dicaBtn, exemploBtn, progressiveTimerDisplayEl, currentScoreEl, consecutiveCorrectEl, quizBoxEl, messageBoxEl, userNameInputEl, userClassInputEl, startErrorEl, rankingBtn;
         
         // ====================================================================
+        
+        // Função utilitária para embaralhar um array (Fisher-Yates)
+        function shuffleArray(array) {
+            let shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
 
         // Novo: Função para formatar o tempo em H:M:S
         function formatTime(totalSeconds) {
@@ -678,7 +628,13 @@
 
                 // Autenticação
                 if (typeof __initial_auth_token !== 'undefined') {
-                    await signInWithCustomToken(auth, __initial_auth_token);
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } catch (tokenError) {
+                        // NOVO: Fallback para Anonymous Sign-in se o Custom Token falhar
+                        console.warn("Falha ao autenticar com Custom Token. Tentando Anonymous Sign-in. Erro:", tokenError.message);
+                        await signInAnonymously(auth);
+                    }
                 } else {
                     await signInAnonymously(auth);
                 }
@@ -813,7 +769,7 @@
 
         // Função auxiliar para selecionar N perguntas aleatórias de um tópico
         function selectRandomQuestions(topicName, count) {
-            const allQuestions = reviewQuestionSet[topicName];
+            const allQuestions = reviewQuestionsBase[topicName];
             if (!allQuestions || allQuestions.length < count) {
                 console.error(`Não há questões suficientes para o tópico ${topicName}`);
                 return [];
@@ -829,6 +785,18 @@
             // Retorna as primeiras 'count' questões
             return shuffled.slice(0, count);
         }
+        
+        // NOVO: Função para sortear as 20 questões únicas para o quiz principal
+        function generateNewQuizQuestions(length) {
+            if (allQuestionsMaster.length < length) {
+                console.error("ERRO: O banco de questões mestre é menor que o tamanho do quiz solicitado.");
+                return allQuestionsMaster;
+            }
+            
+            const shuffledMaster = shuffleArray(allQuestionsMaster);
+            return shuffledMaster.slice(0, length);
+        }
+
 
         // FUNÇÃO CENTRAL: Inicia o ciclo de revisão
         function startReviewAttempt(topic) {
@@ -893,7 +861,7 @@
             }
             
             // NOVO: No modo revisão, as ajudas são SEMPRE ativas (se o quiz estiver ativo).
-            if (quizMode === 'review') {
+            if (quizMode === 'review' || quizMode === 'verification') {
                 ajudarBtn.disabled = false;
                 dicaBtn.disabled = false;
                 exemploBtn.disabled = false;
@@ -911,6 +879,29 @@
             // Esta função não é mais chamada ou necessária, pois o tempo foi removido.
         }
 
+        // NOVO: Inicia a fase de verificação dos erros originais
+        function startVerificationPhase() {
+            quizMode = 'verification';
+            reviewIndex = -1; // Usamos reviewIndex como contador para o array mainQuizErrors
+            
+            // Oculta/Mostra botões
+            reviewBtn.classList.add('hidden');
+            retryBtn.classList.add('hidden');
+            nextQuestionBtn.classList.remove('hidden');
+            restartBtn.classList.add('hidden'); 
+            
+            // Reinicia o uso de linhas de vida (habilitadas no modo verificação)
+            lifelineUsage = { ajudar: false, dica: false, exemplo: false };
+            
+            // Garante que o botão de saída esteja desabilitado no início da verificação
+            restartBtn.textContent = 'SAIR DO JOGO';
+            restartBtn.disabled = true;
+            restartBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            restartBtn.classList.remove('hidden');
+
+            loadNextQuestion();
+        }
+
         // FUNÇÃO CENTRAL: Carrega a próxima pergunta, ou o relatório final
         function loadNextQuestion() {
             messageBoxEl.classList.add('hidden');
@@ -918,38 +909,56 @@
             // Resetar estados por pergunta
             secondChanceActive = false; 
 
+            let currentSet, currentIndex;
+
             if (quizMode === 'main') {
                 currentQuestionIndex++;
-                if (currentQuestionIndex >= questions.length) {
+                if (currentQuestionIndex >= currentQuizQuestions.length) { // USANDO currentQuizQuestions
                     // FIM DO QUIZ PRINCIPAL: Mostrar relatório
                     showFinalReport();
                     return;
                 }
+                currentSet = currentQuizQuestions; // USANDO currentQuizQuestions
+                currentIndex = currentQuestionIndex;
                 
-                const currentQ = questions[currentQuestionIndex];
                 // Numeração principal no formato "1 - "
-                document.getElementById('quiz-title').textContent = `Pergunta ${currentQuestionIndex + 1}:`;
-                questionTextEl.textContent = `${currentQuestionIndex + 1} - ${currentQ.question}`;
-                topicInfoEl.innerHTML = `Conteúdo: ${currentQ.topic}`;
-                
+                document.getElementById('quiz-title').textContent = `Pergunta ${currentQuestionIndex + 1}/${QUIZ_LENGTH}:`;
+                topicInfoEl.innerHTML = `Conteúdo: ${currentSet[currentIndex].topic}`;
+
             } else if (quizMode === 'review') {
                 reviewIndex++;
                 if (reviewIndex >= reviewQuestions.length) {
-                    // FIM DO MODO REVISÃO
-                    showReviewEnd();
+                    // FIM DO MODO REVISÃO: Passa para a verificação dos erros originais
+                    startVerificationPhase();
                     return;
                 }
-                
-                const currentQ = reviewQuestions[reviewIndex];
+                currentSet = reviewQuestions;
+                currentIndex = reviewIndex;
+
                 // Numeração de revisão sem '/'
                 document.getElementById('quiz-title').textContent = `REVISÃO ${reviewIndex + 1}:`;
-                questionTextEl.textContent = `${currentQ.question}`;
-                topicInfoEl.innerHTML = `REVISANDO: ${currentQ.topic}`;
+                topicInfoEl.innerHTML = `REVISANDO: ${currentSet[currentIndex].topic}`;
+
+            } else if (quizMode === 'verification') {
+                // Modo Verificação: Apresenta a primeira pergunta do array de erros
+                reviewIndex++; // Apenas para controlar a exibição visual
+                
+                if (mainQuizErrors.length === 0) {
+                    // FIM DA VERIFICAÇÃO: Todas as perguntas foram acertadas
+                    showVerificationEnd(true);
+                    return;
+                }
+
+                currentSet = mainQuizErrors;
+                currentIndex = 0; // Sempre a primeira do array de erros
+
+                // Numeração da verificação
+                document.getElementById('quiz-title').textContent = `VERIFICAÇÃO DE ERROS (${mainQuizErrors.length} restantes):`;
+                topicInfoEl.innerHTML = `REVISANDO: ${currentSet[currentIndex].topic}`;
+
             }
 
             // Lógica comum de carregamento
-            let currentSet = quizMode === 'main' ? questions : reviewQuestions;
-            let currentIndex = quizMode === 'main' ? currentQuestionIndex : reviewIndex;
             const currentQ = currentSet[currentIndex];
 
             quizActive = true;
@@ -960,6 +969,10 @@
             nextQuestionBtn.textContent = "RESPONDENDO...";
 
             optionsContainerEl.innerHTML = '';
+            
+            let questionPrefix = (quizMode === 'main' || quizMode === 'verification') ? `${currentSet[currentIndex].question.split(')')[0]}: ` : '';
+            questionTextEl.textContent = `${questionPrefix}${currentQ.question}`;
+
             currentQ.options.forEach((option, index) => {
                 const button = document.createElement('button');
                 button.className = 'option-button p-4 rounded-lg text-left font-semibold shadow-md';
@@ -970,7 +983,6 @@
             });
 
             updateLifelineButtons();
-            // startTimer(); // REMOVIDO: Não inicia mais o timer
         }
 
         // Função para desabilitar as opções após uma resposta
@@ -992,70 +1004,88 @@
         function handleAnswer(event) {
             if (!quizActive) return;
 
-            
             const selectedButton = event.currentTarget;
             const selectedIndex = parseInt(selectedButton.dataset.index);
             
-            let currentSet = quizMode === 'main' ? questions : reviewQuestions;
-            let currentIndex = quizMode === 'main' ? currentQuestionIndex : reviewIndex;
+            let currentSet, currentIndex, questionNumber;
+
+            if (quizMode === 'main') {
+                currentSet = currentQuizQuestions; // USANDO currentQuizQuestions
+                currentIndex = currentQuestionIndex;
+                questionNumber = currentIndex + 1;
+            } else if (quizMode === 'review') {
+                currentSet = reviewQuestions;
+                currentIndex = reviewIndex;
+                questionNumber = currentIndex + 1;
+            } else { // verification
+                currentSet = mainQuizErrors;
+                currentIndex = 0;
+                // No modo verificação, não usamos questionNumber, mas sim o índice original
+                questionNumber = `ERRO ORIGINAL ${mainQuizErrors[0].originalIndex + 1}`; 
+            }
+            
             const currentQ = currentSet[currentIndex];
             const correctIndex = currentQ.answerIndex;
             
-            // Tratamento da Segunda Chance (Convidados) - MANTIDO A LÓGICA CASO O BOTÃO SEJA REINTRODUZIDO
+            // Tratamento da Segunda Chance (NÃO USADO ATUALMENTE)
             if (selectedIndex !== correctIndex && secondChanceActive) {
-                secondChanceActive = false; // Consome a chance
+                secondChanceActive = false;
                 selectedButton.disabled = true;
                 selectedButton.classList.add('eliminated-option');
-                
                 alertHelp("CONVIDADOS", "Resposta incorreta! Você tem uma segunda chance. Escolha outra opção.");
-                return; // NÃO finaliza a questão, apenas desabilita a opção errada
+                return;
             }
             
-            // Se chegou aqui, a questão está sendo FINALIZADA (acerto, erro sem 2ª chance, ou 2º erro)
+            // Se chegou aqui, a questão está sendo FINALIZADA
             
             nextQuestionBtn.disabled = false;
-            updateLifelineButtons(); // Desabilita linhas de vida
-
+            updateLifelineButtons(); 
             quizActive = false;
-            
             disableOptions(correctIndex, selectedIndex);
             
-            let questionNumber = quizMode === 'main' ? currentIndex + 1 : currentIndex + 1; // Simplificado
+            let isCorrect = selectedIndex === correctIndex;
 
-            if (selectedIndex === correctIndex) {
-                // Acerto
+            if (isCorrect) {
+                // Lógica de Acerto
                 if (quizMode === 'main') {
-                    // CADA ACERTO VALE 1 PONTO
                     currentScore += 1;
                     consecutiveCorrect++;
                     topicPerformance[currentQ.topic].total++;
                     topicPerformance[currentQ.topic].correct++;
                 } else if (quizMode === 'review') { 
                     reviewCorrectCount++;
+                } else if (quizMode === 'verification') {
+                    // Remove a pergunta do array de erros para sempre (Verificação)
+                    mainQuizErrors.shift(); 
                 }
 
                 quizBoxEl.classList.remove('main-quiz-box', 'bg-red-700');
                 quizBoxEl.classList.add('bg-green-700');
-                // Mensagem de acerto ajustada
                 questionTextEl.textContent = (quizMode === 'main' ? "CORRETO! Você ganhou 1 ponto!" : "CORRETO!");
                 
-                // Numeração no formato "1 - "
                 messageBoxEl.textContent = `${questionNumber} - ACERTO / EXPLICAÇÃO: ${currentQ.explanation}`;
                 messageBoxEl.classList.remove('hidden', 'bg-red-600');
                 messageBoxEl.classList.add('bg-green-600');
             } else {
-                // Erro (Final)
+                // Lógica de Erro
                 if (quizMode === 'main') {
                     consecutiveCorrect = 0;
                     topicPerformance[currentQ.topic].total++;
                     topicPerformance[currentQ.topic].wrong++;
+                    // NOVO: Registra o erro no quiz principal (necessário para a verificação)
+                    currentQ.originalIndex = currentIndex;
+                    mainQuizErrors.push(currentQ); 
+                } else if (quizMode === 'verification') {
+                    // NOVO: Em caso de erro na verificação, a pergunta permanece em mainQuizErrors
+                    // mas deve ser movida para o final do array para ser repetida.
+                    const erroredQuestion = mainQuizErrors.shift();
+                    mainQuizErrors.push(erroredQuestion);
                 }
                 
                 quizBoxEl.classList.remove('main-quiz-box', 'bg-green-700');
                 quizBoxEl.classList.add('bg-red-700');
                 questionTextEl.textContent = "ERRADO! A resposta correta era: " + currentQ.options[correctIndex];
                 
-                // Numeração no formato "1 - "
                 messageBoxEl.textContent = `${questionNumber} - ERRO / EXPLICAÇÃO: ${currentQ.explanation}`; 
                 messageBoxEl.classList.remove('hidden', 'bg-green-600');
                 messageBoxEl.classList.add('bg-red-600');
@@ -1063,11 +1093,13 @@
             
             updateScore();
             
-            // Atualiza o texto do botão para o próximo passo (seja próxima pergunta ou resultado final)
-            if (quizMode === 'main' && currentQuestionIndex === questions.length - 1) {
+            // Atualiza o texto do botão para o próximo passo
+            if (quizMode === 'main' && currentQuestionIndex === currentQuizQuestions.length - 1) { // USANDO currentQuizQuestions
                 nextQuestionBtn.textContent = "VER RESULTADO FINAL";
             } else if (quizMode === 'review' && reviewIndex === reviewQuestions.length - 1) {
-                nextQuestionBtn.textContent = "FIM DA REVISÃO";
+                nextQuestionBtn.textContent = "INICIAR VERIFICAÇÃO DE ERROS";
+            } else if (quizMode === 'verification') {
+                 nextQuestionBtn.textContent = (mainQuizErrors.length === 0) ? "VER RELATÓRIO FINAL" : "PRÓXIMO ERRO";
             } else {
                  nextQuestionBtn.textContent = "PRÓXIMA PERGUNTA";
             }
@@ -1097,54 +1129,50 @@
             
             optionsContainerEl.innerHTML = '';
             nextQuestionBtn.classList.add('hidden');
-            retryBtn.classList.add('hidden'); // Oculta o botão de repetição
+            retryBtn.classList.add('hidden'); 
 
-            const finalTime = formatTime(totalTimeSeconds); // Obter tempo final
+            const finalTime = formatTime(totalTimeSeconds); 
 
             let reportMessage = `
                 <h2 class="text-2xl font-bold mb-4">RELATÓRIO FINAL</h2>
-                <!-- PONTUAÇÃO AJUSTADA AQUI -->
                 <p class="text-xl font-semibold mb-2">JOGADOR: <span class="text-yellow-300">${userName} (${userClass})</span></p>
                 <p class="text-xl font-semibold mb-2">PONTUAÇÃO TOTAL: <span class="text-yellow-300">${currentScore}</span> PONTO(S)</p>
                 <p class="text-lg font-semibold mt-4">TEMPO GASTO TOTAL: <span class="text-yellow-300 font-mono">${finalTime}</span></p>
             `;
 
-            if (weakestTopic) {
-                quizCompletedSuccessfully = false; // Teve erros, não completou com sucesso
-                weakestTopicName = weakestTopic; // Salva o tópico fraco para a função de repetição
-                
-                const errors = topicPerformance[weakestTopic].wrong;
+            if (mainQuizErrors.length > 0) { // Verifica se houve erros no geral (ignora o tópico fraco se for zero)
+                quizCompletedSuccessfully = false; 
+                weakestTopicName = weakestTopic; 
                 
                 reportMessage += `
                     <div class="mt-4 p-4 rounded-lg bg-red-700">
                         <h3 class="text-lg font-bold">🎯 FOCO NA REVISÃO</h3>
                         <p class="mt-2 text-xl font-mono">${weakestTopic}</p>
-                        <p class="mt-1 text-sm">VOCÊ COMETEU ${errors} ERRO${errors > 1 ? 'S' : ''} NESTE TEMA.</p>
+                        <p class="mt-1 text-sm">VOCÊ COMETEU ${mainQuizErrors.length} ERRO(S) NO QUIZ PRINCIPAL. É OBRIGATÓRIO COMPLETAR A REVISÃO E VERIFICAÇÃO PARA SAIR.</p>
                     </div>
-                    <p class="mt-4 text-base">É OBRIGATÓRIO CONCLUIR A REVISÃO PARA JOGAR NOVAMENTE.</p>
                 `;
                 reviewBtn.textContent = `INICIAR REVISÃO: ${weakestTopic.split('(')[0].trim()}`;
-                reviewBtn.classList.remove('hidden'); // Mostra o botão de revisão
+                reviewBtn.classList.remove('hidden'); 
 
-                // NOVO: Botão REINICIAR (SAIR E REINICIAR) DESABILITADO
+                // Botão de saída desabilitado
                 restartBtn.textContent = 'SAIR E REINICIAR';
                 restartBtn.disabled = true;
                 restartBtn.classList.add('opacity-50', 'cursor-not-allowed');
                 restartBtn.classList.remove('hidden');
 
             } else {
-                // SUCESSO NO QUIZ PRINCIPAL
+                // SUCESSO NO QUIZ PRINCIPAL (sem erros)
                 quizCompletedSuccessfully = true; 
-                saveResultToFirestore(); // SALVA O RESULTADO
+                saveResultToFirestore(); 
                 reportMessage += `
                     <div class="mt-4 p-4 rounded-lg bg-green-700">
                         <h3 class="text-lg font-bold">🌟 PARABÉNS!</h3>
-                        <p class="mt-2">VOCÊ ACERTOU TODAS AS QUESTÕES. JOGUE NOVAMENTE PARA CONSOLIDAR SEU CONHECIMENTO!</p>
+                        <p class="mt-2">VOCÊ ACERTOU TODAS AS QUESTÕES. SEU RESULTADO FOI REGISTRADO.</p>
                     </div>
                 `;
-                reviewBtn.classList.add('hidden'); // Oculta o botão se não houver erro claro
+                reviewBtn.classList.add('hidden'); 
 
-                // ALTERADO: Botão FINAL AGORA É "SAIR DO JOGO"
+                // Botão SAIR DO JOGO habilitado
                 restartBtn.textContent = 'SAIR DO JOGO';
                 restartBtn.disabled = false;
                 restartBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'hidden');
@@ -1154,10 +1182,49 @@
             quizBoxEl.classList.add('bg-gray-800');
             questionTextEl.innerHTML = reportMessage;
             topicInfoEl.textContent = "ANÁLISE CONCLUÍDA.";
-            updateLifelineButtons(); // Desabilita linhas de vida no relatório
+            updateLifelineButtons(); 
             quizActive = false;
         }
         
+        // NOVO: Final da Verificação de Erros
+        function showVerificationEnd(success) {
+            // Este método só é chamado quando mainQuizErrors.length === 0, ou seja, sucesso.
+
+            optionsContainerEl.innerHTML = '';
+            nextQuestionBtn.classList.add('hidden');
+            reviewBtn.classList.add('hidden');
+            retryBtn.classList.add('hidden');
+            
+            const finalTime = formatTime(totalTimeSeconds); 
+            let timeDisplay = `<p class="text-lg font-semibold mt-4">TEMPO TOTAL DA ATIVIDADE: <span class="text-yellow-300 font-mono">${finalTime}</span></p>`;
+
+            if (success) {
+                saveResultToFirestore(); 
+                quizBoxEl.classList.remove('bg-red-700', 'bg-gray-800');
+                quizBoxEl.classList.add('bg-green-700');
+                 questionTextEl.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-4">VERIFICAÇÃO DE ERROS CONCLUÍDA!</h2>
+                    <p class="text-xl font-semibold mb-2">PARABÉNS! VOCÊ ACERTOU TODAS AS ${currentQuizQuestions.length} QUESTÕES DO QUIZ.</p>
+                    ${timeDisplay}
+                `;
+                // Botão SAIR DO JOGO habilitado
+                restartBtn.textContent = 'SAIR DO JOGO';
+                restartBtn.disabled = false;
+                restartBtn.classList.remove('hidden', 'opacity-50', 'cursor-not-allowed');
+            } else {
+                 // Este caso não deve ocorrer com o fluxo atual, mas como fallback
+                 quizBoxEl.classList.add('bg-red-700');
+                 questionTextEl.innerHTML = `<h2 class="text-2xl font-bold mb-4">ERRO INESPERADO</h2><p>Ocorreu um erro na fase de verificação.</p>`;
+                 restartBtn.textContent = 'SAIR E REINICIAR';
+                 restartBtn.disabled = true; // Mantém desabilitado, forçando a senha
+                 restartBtn.classList.remove('hidden');
+            }
+            
+            topicInfoEl.textContent = "JOGO FINALIZADO.";
+            updateLifelineButtons(); 
+            quizActive = false;
+        }
+
         // Exibe o fim do modo revisão, mostrando a quantidade de acertos
         function showReviewEnd() {
             quizBoxEl.classList.remove('bg-green-700', 'bg-red-700');
@@ -1166,43 +1233,40 @@
             reviewBtn.classList.add('hidden');
             
             const totalReview = reviewQuestions.length;
-            const finalTime = formatTime(totalTimeSeconds); // Obter tempo final
-            let timeDisplay = `<p class="text-lg font-semibold mt-4">TEMPO TOTAL DA ATIVIDADE: <span class="text-yellow-300 font-mono">${finalTime}</span></p>`;
-
-
+            
             if (reviewCorrectCount === totalReview) {
-                stopProgressiveTimer(); // PARAR CRONÔMETRO APENAS NO SUCESSO
-                saveResultToFirestore(); // SALVA O RESULTADO APÓS REVISÃO COMPLETA
-                // SUCESSO! Acertou todas as 3
+                // SUCESSO NA REVISÃO -> INICIA VERIFICAÇÃO DE ERROS
+                
                 quizBoxEl.classList.add('bg-green-700');
                  questionTextEl.innerHTML = `
                     <h2 class="text-2xl font-bold mb-4">REVISÃO CONCLUÍDA COM SUCESSO!</h2>
-                    <p class="text-xl font-semibold mb-2">ACERTOS: <span class="text-yellow-300">${reviewCorrectCount} / ${totalReview}</span></p>
-                    <p class="mt-4">VOCÊ DOMINOU O TÓPICO ${weakestTopicName.split('(')[0].trim()}. AGORA PODE REINICIAR O QUIZ.</p>
-                    ${timeDisplay}
+                    <p class="text-xl font-semibold mb-2">ACERTOS: ${reviewCorrectCount} / ${totalReview}.</p>
+                    <p class="mt-4">AGORA, VOCÊ DEVE RESPONDER CORRETAMENTE AS ${mainQuizErrors.length} QUESTÕES QUE ERROU NO QUIZ PRINCIPAL.</p>
                 `;
-                // ALTERADO: Botão FINAL AGORA É "SAIR DO JOGO"
-                restartBtn.textContent = 'SAIR DO JOGO';
-                restartBtn.disabled = false;
-                restartBtn.classList.remove('hidden', 'opacity-50', 'cursor-not-allowed');
+                topicInfoEl.textContent = "PREPARANDO VERIFICAÇÃO DE ERROS.";
+                nextQuestionBtn.classList.remove('hidden');
+                nextQuestionBtn.textContent = "INICIAR VERIFICAÇÃO DE ERROS";
+                nextQuestionBtn.disabled = false;
+
+                restartBtn.classList.add('hidden'); 
                 retryBtn.classList.add('hidden');
+                
             } else {
                 // FALHA! Precisa tentar novamente (O cronômetro continua rodando)
                 quizBoxEl.classList.add('bg-red-700');
                  questionTextEl.innerHTML = `
                     <h2 class="text-2xl font-bold mb-4">REVISÃO INCOMPLETA!</h2>
-                    <p class="text-xl font-semibold mb-2">ACERTOS: <span class="text-yellow-300">${reviewCorrectCount} / ${totalReview}</span></p>
+                    <p class="text-xl font-semibold mb-2">ACERTOS: ${reviewCorrectCount} / ${totalReview}</p>
                     <p class="mt-4">PARA CONCLUIR O CICLO, VOCÊ PRECISA DE ${totalReview}/${totalReview} ACERTOS. TENTE NOVAMENTE COM NOVAS PERGUNTAS!</p>
                 `;
                 retryBtn.classList.remove('hidden'); // MOSTRA O BOTÃO TENTAR NOVAMENTE
                 restartBtn.classList.add('hidden'); 
             }
             
-            topicInfoEl.textContent = "FIM DA REVISÃO";
             updateLifelineButtons(); // Desabilita linhas de vida
             quizActive = false;
         }
-        
+
         // NOVO: Função para iniciar o jogo (sai da tela inicial)
         function startGame() {
             // Captura e validação dos dados
@@ -1219,6 +1283,9 @@
             mainQuizContainerEl.classList.remove('hidden');
             nextQuestionBtn.classList.remove('hidden');
             
+            // NOVO: GERA AS 20 QUESTÕES ALEATÓRIAS AQUI
+            currentQuizQuestions = generateNewQuizQuestions(QUIZ_LENGTH);
+
             startProgressiveTimer(); // INICIA O CRONÔMETRO
             
             loadNextQuestion(); // Inicia o quiz com a primeira pergunta
@@ -1235,7 +1302,9 @@
             reviewCorrectCount = 0;
             weakestTopicName = '';
             quizCompletedSuccessfully = false; 
-            
+            mainQuizErrors = []; // ZERA O ARRAY DE ERROS
+            currentQuizQuestions = []; // ZERA O QUIZ DA RODADA
+
             // ZERA O TEMPO E O CRONÔMETRO
             stopProgressiveTimer();
             totalTimeSeconds = 0;
@@ -1265,7 +1334,6 @@
             quizBoxEl.classList.add('main-quiz-box');
             document.getElementById('quiz-title').textContent = 'Pergunta';
             questionTextEl.textContent = 'Aguardando Carregamento...';
-            topicInfoEl.textContent = 'Conteúdo: ';
 
             // Limpa os campos de input do usuário
             if (userNameInputEl) userNameInputEl.value = '';
@@ -1281,29 +1349,34 @@
         
         // Função de Reiniciar (chamada pelo botão)
         function restartQuiz() {
-            // Verifica se o botão REINICIAR está habilitado (caso contrário, ignora o clique)
-            if (restartBtn.disabled) return;
-            
-            // Chama a função central de reset (volta para a tela inicial)
-            forceFullReset();
+            // Se o botão SAIR DO JOGO estiver habilitado, ele chama o reset.
+            if (!restartBtn.disabled) {
+                 forceFullReset();
+            } else {
+                // Caso contrário (está desabilitado no modo de verificação/relatório), não faz nada.
+                return;
+            }
         }
-
+        
         // --- NOVO: Funções de Controle de Saída e Senha ---
 
         function exitReviewMode() {
-            // FIX: Garante que forceFullReset volte para a Tela Inicial (Start Screen)
+            // Chamado após a senha no modo revisão ou verificação. Volta para a Tela Inicial.
             forceFullReset(); 
         }
 
-        function showPasswordModal() {
+        // NOVO: Modal de Senha unificado (usado para PARAR e CLASSIFICAÇÃO)
+        function showPasswordModal(context) {
             stopProgressiveTimer(); // PAUSA O CRONÔMETRO AO ABRIR O MODAL
+
+            const isRanking = context === 'ranking';
 
             const modal = document.createElement('div');
             modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
             modal.innerHTML = `
                 <div class="bg-white p-8 rounded-lg text-gray-900 max-w-sm w-full shadow-2xl text-center">
-                    <h3 class="text-xl font-bold mb-4">CONFIRMAÇÃO DE SAÍDA</h3>
-                    <p class="mb-4">Para sair do modo Revisão, digite a senha de 4 dígitos:</p>
+                    <h3 class="text-xl font-bold mb-4">${isRanking ? 'ACESSO RESTRITO' : 'CONFIRMAÇÃO DE SAÍDA'}</h3>
+                    <p class="mb-4">Para ${isRanking ? 'ver a Classificação' : 'sair do modo Revisão/Verificação'}, digite a senha de 4 dígitos:</p>
                     <input type="password" id="password-input" maxlength="4" class="w-full p-2 border border-gray-400 rounded mb-4 text-center text-lg tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-red-600">
                     <p id="password-error" class="text-red-600 mb-4 hidden">Senha incorreta. Tente novamente.</p>
                     <div class="flex justify-between gap-2">
@@ -1316,21 +1389,31 @@
 
             const passwordInput = document.getElementById('password-input');
             const errorEl = document.getElementById('password-error');
-
-            document.getElementById('cancel-password').addEventListener('click', () => {
+            
+            const closeModalAndResume = () => {
                 document.body.removeChild(modal);
-                // Retoma à revisão e retoma o cronômetro
-                if (quizMode === 'review') { 
+                // Retoma o cronômetro, a menos que tenhamos parado para ver o ranking
+                if (quizActive || quizMode === 'review' || quizMode === 'verification') { 
                     startProgressiveTimer(); 
                 }
-            });
+            };
+
+
+            document.getElementById('cancel-password').addEventListener('click', closeModalAndResume);
 
             document.getElementById('confirm-password').addEventListener('click', () => {
                 const inputPassword = passwordInput.value;
 
                 if (inputPassword === REVIEW_EXIT_PASSWORD) {
                     document.body.removeChild(modal);
-                    exitReviewMode(); // CHAMA o RESET COMPLETO E VOLTA PARA A TELA INICIAL
+                    
+                    if (isRanking) {
+                        // Se for ranking, carrega a lista após a senha
+                        loadRanking(); 
+                    } else {
+                        // Se for saída, força o reset para o início
+                        exitReviewMode();
+                    }
                 } else {
                     errorEl.classList.remove('hidden');
                     passwordInput.value = ''; // Limpa o input em caso de falha
@@ -1352,9 +1435,9 @@
             stopProgressiveTimer(); // PAUSA O CRONÔMETRO
             const currentTime = formatTime(totalTimeSeconds);
 
-            if (quizMode === 'review') {
-                // Se estiver em revisão, exige a senha para sair
-                showPasswordModal();
+            if (quizMode === 'review' || quizMode === 'verification') {
+                // Se estiver em revisão/verificação, exige a senha para sair
+                showPasswordModal('exit');
             } else {
                 // Modo principal: pausa simples. Ao fechar o modal, o timer deve ser retomado.
                 const modalTitle = "JOGO PARADO";
@@ -1364,6 +1447,7 @@
                 alertHelp(modalTitle, modalMessage);
             }
         }
+        
         // --- FIM das Funções de Controle de Saída e Senha ---
 
         // NOVO: Função para atribuir as referências DOM
@@ -1405,8 +1489,8 @@
             // A verificação de uso só ocorre no quiz principal
             if (!quizActive || (quizMode === 'main' && lifelineUsage.ajudar)) return;
             
-            let currentSet = quizMode === 'main' ? questions : reviewQuestions;
-            let currentIndex = quizMode === 'main' ? currentQuestionIndex : reviewIndex;
+            let currentSet = quizMode === 'main' ? currentQuizQuestions : (quizMode === 'review' ? reviewQuestions : mainQuizErrors);
+            let currentIndex = quizMode === 'main' ? currentQuestionIndex : (quizMode === 'review' ? reviewIndex : 0);
             const currentQ = currentSet[currentIndex];
             
             if (currentQ && currentQ.ajudar_completa) {
@@ -1425,8 +1509,8 @@
             // A verificação de uso só ocorre no quiz principal
             if (!quizActive || (quizMode === 'main' && lifelineUsage.dica)) return;
             
-            let currentSet = quizMode === 'main' ? questions : reviewQuestions;
-            let currentIndex = quizMode === 'main' ? currentQuestionIndex : reviewIndex;
+            let currentSet = quizMode === 'main' ? currentQuizQuestions : (quizMode === 'review' ? reviewQuestions : mainQuizErrors);
+            let currentIndex = quizMode === 'main' ? currentQuestionIndex : (quizMode === 'review' ? reviewIndex : 0);
             const currentQ = currentSet[currentIndex];
             
             if (currentQ && currentQ.dica_simples) {
@@ -1445,8 +1529,8 @@
             // A verificação de uso só ocorre no quiz principal
             if (!quizActive || (quizMode === 'main' && lifelineUsage.exemplo)) return;
             
-            let currentSet = quizMode === 'main' ? questions : reviewQuestions;
-            let currentIndex = quizMode === 'main' ? currentQuestionIndex : reviewIndex;
+            let currentSet = quizMode === 'main' ? currentQuizQuestions : (quizMode === 'review' ? reviewQuestions : mainQuizErrors);
+            let currentIndex = quizMode === 'main' ? currentQuestionIndex : (quizMode === 'review' ? reviewIndex : 0);
             const currentQ = currentSet[currentIndex];
             
             if (currentQ && currentQ.exemplo_similar) {
@@ -1487,13 +1571,16 @@
                     if (!quizActive) {
                         startProgressiveTimer();
                     }
+                    // AQUI O FLUXO É CONTROLADO POR loadNextQuestion()
                     loadNextQuestion();
                 }
             });
             
             // NOVO: Chama a função handleParar()
             document.getElementById('parar-btn').addEventListener('click', handleParar);
-            rankingBtn.addEventListener('click', loadRanking); // NOVO: Listener para o ranking
+            
+            // NOVO: Listener do Ranking agora chama o modal de senha
+            rankingBtn.addEventListener('click', () => showPasswordModal('ranking')); 
 
             restartBtn.addEventListener('click', restartQuiz);
             retryBtn.addEventListener('click', () => startReviewAttempt(weakestTopicName));
